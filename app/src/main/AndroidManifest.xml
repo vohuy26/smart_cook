@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- INTERNET -->
+    <uses-permission
+        android:name="android.permission.INTERNET" />
+
+    <!-- MICROPHONE FOR VOICE SEARCH -->
+    <uses-permission
+        android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Android 13+ -->
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_IMAGES"/>
+
+    <!-- Android 12 trở xuống -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Smart_cook"
+        tools:targetApi="31">
+
+        <!-- ========================= -->
+        <!-- SPLASH ACTIVITY -->
+        <!-- ========================= -->
+
+        <activity
+            android:name=".ui.activities.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Smart_cook">
+
+            <!-- LAUNCHER -->
+
+            <intent-filter>
+
+                <action
+                    android:name=
+                        "android.intent.action.MAIN" />
+
+                <category
+                    android:name=
+                        "android.intent.category.LAUNCHER" />
+
+            </intent-filter>
+
+        </activity>
+
+        <!-- ========================= -->
+        <!-- ONBOARDING -->
+        <!-- ========================= -->
+
+        <activity
+            android:name=".ui.activities.OnboardingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Smart_cook" />
+
+        <!-- ========================= -->
+        <!-- LOGIN -->
+        <!-- ========================= -->
+
+        <activity
+            android:name=".ui.activities.LoginActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Smart_cook" />
+
+        <!-- ========================= -->
+        <!-- REGISTER -->
+        <!-- ========================= -->
+
+        <activity
+            android:name=".ui.activities.RegisterActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Smart_cook" />
+
+        <!-- ========================= -->
+        <!-- MAIN -->
+        <!-- ========================= -->
+
+        <activity
+            android:name=".ui.activities.MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Smart_cook" />
+
+        <activity
+            android:name=".ui.activities.EditProfileActivity"/>
+
+
+        <!-- ========================= -->
+        <!-- ADMIN -->
+        <!-- ========================= -->
+
+        <activity
+            android:name=".ui.admin.AdminActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Smart_cook" />
+
+
+
+        <activity
+            android:name=".ui.admin.CustomRecipes.AddRecipeActivity"/>
+
+        <activity
+            android:name=".ui.admin.CustomRecipes.EditRecipeActivity"/>
+    </application>
+
+</manifest>

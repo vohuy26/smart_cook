@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="purple_dashboard">#6C3EF4</color>
+    <color name="purple_light">#8B6CF8</color>
+
+    <color name="green_dashboard">#4CAF50</color>
+
+    <color name="dashboard_background">#F5F6FA</color>
+
+    <color name="dashboard_card">#FFFFFF</color>
+
+    <color name="dashboard_text">#1F2937</color>
+
+    <color name="dashboard_subtitle">#6B7280</color>
+    <color name="purple_200">#BB86FC</color>
+</resources>

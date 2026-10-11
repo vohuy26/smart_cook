@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+android:layout_width="220dp"
+android:layout_height="280dp"
+android:layout_marginEnd="18dp"
+app:cardCornerRadius="30dp"
+app:cardElevation="0dp">
+
+<FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- IMAGE -->
+
+    <ImageView
+        android:id="@+id/imgRecommendation"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/nen1"/>
+
+    <!-- DARK OVERLAY -->
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#55000000"/>
+
+    <!-- TOP AI BADGE -->
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_gravity="top|start"
+        app:cardCornerRadius="18dp"
+        app:cardBackgroundColor="#CCFFFFFF"
+        app:cardElevation="0dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="7dp">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_ai"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="AI Pick"
+                android:textColor="#111111"
+                android:textSize="13sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- CONTENT -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:padding="18dp">
+
+        <!-- TITLE -->
+
+        <TextView
+            android:id="@+id/txtRecommendationTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Healthy Salad 🥗"
+            android:textColor="@android:color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:maxLines="2"
+            android:ellipsize="end"/>
+
+        <!-- DESCRIPTION -->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Recommended for you"
+            android:textColor="#DDFFFFFF"
+            android:textSize="14sp"
+            android:layout_marginTop="6dp"/>
+
+        <!-- BUTTON -->
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTry"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="Try Now"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            android:textColor="#7C4DFF"
+            android:layout_marginTop="14dp"
+            android:backgroundTint="@android:color/white"
+            app:cornerRadius="16dp"/>
+    </LinearLayout>
+
+</FrameLayout>
+
+</androidx.cardview.widget.CardView>

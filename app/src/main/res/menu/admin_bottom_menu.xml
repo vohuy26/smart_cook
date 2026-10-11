@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/admin_dashboard"
+        android:title="Tổng quan"
+        android:icon="@drawable/ic_home"/>
+
+    <item
+        android:id="@+id/admin_recipes"
+        android:title="Món ăn"
+        android:icon="@drawable/ic_food_admin"/>
+
+    <item
+        android:id="@+id/admin_users"
+        android:title="Người dùng"
+        android:icon="@drawable/ic_profile"/>
+
+    <item
+        android:id="@+id/admin_reviews"
+        android:title="Đánh giá"
+        android:icon="@drawable/ic_danhgia"/>
+
+    <item
+        android:id="@+id/admin_stats"
+        android:title="Thống kê"
+        android:icon="@drawable/ic_chart"/>
+
+</menu>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "947115500696",
+    "project_id": "smartcook-8ecb0",
+    "storage_bucket": "smartcook-8ecb0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:947115500696:android:5d31c962d49edc45acdced",
+        "android_client_info": {
+          "package_name": "com.example.smart_cook"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiESXu3lvTu2KY44XcWx_4Oi-gAlijVyc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

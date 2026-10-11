@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <string-array name="recipe_categories">
+
+        <item>All</item>
+
+        <item>Breakfast</item>
+
+        <item>Lunch</item>
+
+        <item>Dinner</item>
+
+        <item>Dessert</item>
+
+        <item>Vegetarian</item>
+
+        <item>Seafood</item>
+
+    </string-array>
+
+    <string-array name="recipe_categories_admin">
+        <item>Món mặn</item>
+        <item>Món chay</item>
+        <item>Canh</item>
+        <item>Tráng miệng</item>
+        <item>Đồ uống</item>
+        <item>Ăn nhanh</item>
+    </string-array>
+
+</resources>
+
+
