@@ -30,7 +30,13 @@ import com.example.smart_cook.ui.adapters.RecommendationAdapter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.findNavController
+
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.repeatOnLifecycle
+
+import com.example.smart_cook.ui.home.HomeViewModel
+import com.example.smart_cook.ui.home.HomeViewModelFactory
 
 class HomeFragment : Fragment() {
 
@@ -38,6 +44,7 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var mealRepository: MealRepository
+    private lateinit var homeViewModel: HomeViewModel
 
     private var allMeals =
         mutableListOf<Meal>()
@@ -157,17 +164,30 @@ class HomeFragment : Fragment() {
         recommendationRepository =
             RecommendationRepository(searchDao)
 
+            val homeViewModelFactory =
+                HomeViewModelFactory(
+                    mealRepository = mealRepository,
+                    recommendationRepository = recommendationRepository
+                )
+
+            homeViewModel =
+                ViewModelProvider(
+                    this,
+                    homeViewModelFactory
+                )[HomeViewModel::class.java]
+
         // =========================
         // SETUP
         // =========================
-
         setupCategories()
 
         loadRecentlyViewed()
 
         setupRecipeAdapter()
 
-        getMeals()
+        observeHomeState()
+
+        homeViewModel.loadHome()
 
         binding.layoutSearch.setOnClickListener {
 
@@ -451,6 +471,79 @@ class HomeFragment : Fragment() {
                 )
 
                 e.printStackTrace()
+            }
+        }
+    }
+
+    private fun observeHomeState() {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+
+                homeViewModel.uiState.collect { state ->
+
+                    // =========================
+                    // MEALS
+                    // =========================
+
+                    allMeals.clear()
+                    allMeals.addAll(state.meals)
+
+                    if (::recipeAdapter.isInitialized) {
+
+                        recipeAdapter.updateData(
+                            state.meals
+                        )
+                    }
+
+                    // =========================
+                    // RECOMMENDATIONS
+                    // =========================
+
+                    val recommendationList =
+                        state.recommendedMeals.map { meal ->
+
+                            Recommendation(
+                                title =
+                                    meal.title
+                                        ?: "Unknown Recipe",
+
+                                image =
+                                    meal.image
+                            )
+                        }
+
+                    recommendationAdapter =
+                        RecommendationAdapter(
+                            recommendationList
+                        )
+
+                    binding.rvRecommendations.layoutManager =
+                        LinearLayoutManager(
+                            requireContext(),
+                            LinearLayoutManager.HORIZONTAL,
+                            false
+                        )
+
+                    binding.rvRecommendations.adapter =
+                        recommendationAdapter
+
+                    // =========================
+                    // ERROR
+                    // =========================
+
+                    state.error?.let { error ->
+
+                        Toast.makeText(
+                            requireContext(),
+                            error,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
             }
         }
     }
@@ -896,12 +989,14 @@ class HomeFragment : Fragment() {
             try {
 
                 val favoriteIds =
-                    repository
-                        .getAllFavoriteIds()
+                    repository.getAllFavoriteIds()
 
-                recipeAdapter.setFavoriteIds(
-                    favoriteIds.toSet()
-                )
+                if (::recipeAdapter.isInitialized) {
+
+                    recipeAdapter.setFavoriteIds(
+                        favoriteIds.toSet()
+                    )
+                }
 
             } catch (e: Exception) {
 
@@ -909,7 +1004,6 @@ class HomeFragment : Fragment() {
             }
         }
     }
-
     override fun onDestroyView() {
 
         super.onDestroyView()
