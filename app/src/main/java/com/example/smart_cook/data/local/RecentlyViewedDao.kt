@@ -17,7 +17,7 @@ interface RecentlyViewedDao {
     )
 
     @Query(
-        "SELECT * FROM recently_viewed ORDER BY id DESC"
+        "SELECT * FROM recently_viewed ORDER BY rowid DESC LIMIT 10"
     )
     suspend fun getAllViewed():
             List<RecentlyViewed>
