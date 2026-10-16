@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.example.smart_cook.model.RecentlyViewed
+import com.example.smart_cook.repository.RecentlyViewedRepository
+import com.example.smart_cook.repository.UserRepository
 
 class HomeViewModel(
 
@@ -28,7 +31,13 @@ class HomeViewModel(
     FavoriteRepository,
 
     private val cloudFavoriteRepository:
-    CloudFavoriteRepository
+    CloudFavoriteRepository,
+
+    private val recentlyViewedRepository:
+    RecentlyViewedRepository,
+
+    private val userRepository:
+    UserRepository
 
 ) : ViewModel() {
 
@@ -107,6 +116,31 @@ class HomeViewModel(
                         error =
                             e.message
                                 ?: "Unable to load recipes"
+                    )
+            }
+        }
+    }
+
+    fun loadUsername() {
+
+        viewModelScope.launch {
+
+            try {
+
+                val username =
+                    userRepository
+                        .getUsername()
+
+                _uiState.value =
+                    _uiState.value.copy(
+                        username = username
+                    )
+
+            } catch (e: Exception) {
+
+                _uiState.value =
+                    _uiState.value.copy(
+                        username = "Smart Cook"
                     )
             }
         }
@@ -288,4 +322,67 @@ class HomeViewModel(
             }
         }
     }
+
+    fun loadRecentlyViewed() {
+
+        viewModelScope.launch {
+
+            try {
+
+                val viewedList =
+                    recentlyViewedRepository
+                        .getAllViewed()
+
+                _uiState.value =
+                    _uiState.value.copy(
+                        recentlyViewed = viewedList
+                    )
+
+            } catch (e: Exception) {
+
+                e.printStackTrace()
+            }
+        }
+    }
+
+
+    fun addRecentlyViewed(
+        meal: Meal
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+
+                val viewedRecipe =
+                    RecentlyViewed(
+                        id = meal.id,
+                        title =
+                            meal.title
+                                ?: "Unknown Recipe",
+                        image = meal.image
+                    )
+
+                recentlyViewedRepository
+                    .insertViewed(
+                        viewedRecipe
+                    )
+
+                val updatedList =
+                    recentlyViewedRepository
+                        .getAllViewed()
+
+                _uiState.value =
+                    _uiState.value.copy(
+                        recentlyViewed =
+                            updatedList
+                    )
+
+            } catch (e: Exception) {
+
+                e.printStackTrace()
+            }
+        }
+    }
+
 }

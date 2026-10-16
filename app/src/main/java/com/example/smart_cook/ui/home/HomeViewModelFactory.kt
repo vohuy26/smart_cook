@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.smart_cook.repository.CloudFavoriteRepository
 import com.example.smart_cook.repository.FavoriteRepository
 import com.example.smart_cook.repository.MealRepository
+import com.example.smart_cook.repository.RecentlyViewedRepository
 import com.example.smart_cook.repository.RecommendationRepository
+import com.example.smart_cook.repository.UserRepository
 
 class HomeViewModelFactory(
 
@@ -19,7 +21,13 @@ class HomeViewModelFactory(
     FavoriteRepository,
 
     private val cloudFavoriteRepository:
-    CloudFavoriteRepository
+    CloudFavoriteRepository,
+
+    private val recentlyViewedRepository:
+    RecentlyViewedRepository,
+
+    private val userRepository:
+    UserRepository
 
 ) : ViewModelProvider.Factory {
 
@@ -35,19 +43,12 @@ class HomeViewModelFactory(
         ) {
 
             return HomeViewModel(
-
-                mealRepository =
-                    mealRepository,
-
-                recommendationRepository =
-                    recommendationRepository,
-
-                favoriteRepository =
-                    favoriteRepository,
-
-                cloudFavoriteRepository =
-                    cloudFavoriteRepository
-
+                mealRepository = mealRepository,
+                recommendationRepository = recommendationRepository,
+                favoriteRepository = favoriteRepository,
+                cloudFavoriteRepository = cloudFavoriteRepository,
+                recentlyViewedRepository = recentlyViewedRepository,
+                userRepository = userRepository
             ) as T
         }
 

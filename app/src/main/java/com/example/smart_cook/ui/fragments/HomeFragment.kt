@@ -23,14 +23,12 @@ import com.example.smart_cook.ui.adapters.CategoryAdapter
 import com.example.smart_cook.ui.adapters.RecentlyViewedAdapter
 import com.example.smart_cook.ui.adapters.RecipeAdapter
 import com.example.smart_cook.ui.adapters.RecommendationAdapter
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import com.example.smart_cook.repository.CloudFavoriteRepository
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.repeatOnLifecycle
-
+import com.example.smart_cook.repository.UserRepository
 import com.example.smart_cook.ui.home.HomeViewModel
 import com.example.smart_cook.ui.home.HomeViewModelFactory
 
@@ -42,19 +40,18 @@ class HomeFragment : Fragment() {
     private lateinit var mealRepository: MealRepository
     private lateinit var homeViewModel: HomeViewModel
 
-    private var allMeals =
-        mutableListOf<Meal>()
+    private var allMeals = mutableListOf<Meal>()
     private lateinit var recipeAdapter: RecipeAdapter
     private lateinit var categoryAdapter: CategoryAdapter
     private lateinit var recommendationAdapter: RecommendationAdapter
     private lateinit var recentlyViewedAdapter: RecentlyViewedAdapter
 
-    private lateinit var favoriteRepository:
-            FavoriteRepository
+    private lateinit var favoriteRepository: FavoriteRepository
 
-    private lateinit var cloudFavoriteRepository:
-            CloudFavoriteRepository
-    private lateinit var viewedRepository: RecentlyViewedRepository
+    private lateinit var userRepository: UserRepository
+
+    private lateinit var cloudFavoriteRepository: CloudFavoriteRepository
+    private lateinit var recentlyViewedRepository: RecentlyViewedRepository
     private lateinit var recommendationRepository: RecommendationRepository
 
     private val categoryMapping = mapOf(
@@ -91,11 +88,6 @@ class HomeFragment : Fragment() {
 
     )
 
-    // FIREBASE
-
-    private lateinit var firestore: FirebaseFirestore
-    private lateinit var auth: FirebaseAuth
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -109,24 +101,12 @@ class HomeFragment : Fragment() {
                 false
             )
 
-        // =========================
-        // FIREBASE
-        // =========================
-
-        firestore =
-            FirebaseFirestore.getInstance()
-
-        auth =
-            FirebaseAuth.getInstance()
+        userRepository =
+            UserRepository()
 
         mealRepository =
             MealRepository()
 
-        // =========================
-        // USERNAME
-        // =========================
-
-        loadUsername()
 
         // =========================
         // FAVORITE DATABASE
@@ -154,8 +134,10 @@ class HomeFragment : Fragment() {
                 .getDatabase(requireContext())
                 .recentlyViewedDao()
 
-        viewedRepository =
-            RecentlyViewedRepository(viewedDao)
+        recentlyViewedRepository =
+            RecentlyViewedRepository(
+                viewedDao
+            )
 
         // =========================
         // SEARCH DATABASE
@@ -171,18 +153,12 @@ class HomeFragment : Fragment() {
 
         val homeViewModelFactory =
             HomeViewModelFactory(
-
-                mealRepository =
-                    mealRepository,
-
-                recommendationRepository =
-                    recommendationRepository,
-
-                favoriteRepository =
-                    favoriteRepository,
-
-                cloudFavoriteRepository =
-                    cloudFavoriteRepository
+                mealRepository = mealRepository,
+                recommendationRepository = recommendationRepository,
+                favoriteRepository = favoriteRepository,
+                cloudFavoriteRepository = cloudFavoriteRepository,
+                recentlyViewedRepository = recentlyViewedRepository,
+                userRepository = userRepository
             )
 
         homeViewModel =
@@ -195,8 +171,6 @@ class HomeFragment : Fragment() {
         // SETUP
         // =========================
         setupCategories()
-
-        loadRecentlyViewed()
 
         setupRecipeAdapter()
 
@@ -223,31 +197,45 @@ class HomeFragment : Fragment() {
 
         observeHomeState()
 
+        homeViewModel.loadUsername()
+
         homeViewModel.loadHome()
     }
 
-    // =========================
-    // LOAD USERNAME
-    // =========================
 
-    private fun loadUsername() {
+    private fun renderRecentlyViewed(
+        viewedList: List<RecentlyViewed>
+    ) {
 
-        val uid =
-            auth.currentUser?.uid ?: return
+        recentlyViewedAdapter =
+            RecentlyViewedAdapter(
+                viewedList
+            ) { recipe ->
 
-        firestore
-            .collection("users")
-            .document(uid)
-            .get()
-            .addOnSuccessListener {
+                val bundle =
+                    Bundle()
 
-                val name =
-                    it.getString("name")
-                        ?: "Smart Cook"
+                bundle.putString(
+                    "mealId",
+                    recipe.id
+                )
 
-                binding.txtUsername.text =
-                    name
+                findNavController()
+                    .navigate(
+                        R.id.recipeDetailFragment,
+                        bundle
+                    )
             }
+
+        binding.rvRecentlyViewed.layoutManager =
+            LinearLayoutManager(
+                requireContext(),
+                LinearLayoutManager.HORIZONTAL,
+                false
+            )
+
+        binding.rvRecentlyViewed.adapter =
+            recentlyViewedAdapter
     }
 
     // =========================
@@ -438,6 +426,9 @@ class HomeFragment : Fragment() {
                                     .uiState
                                     .collect { state ->
 
+                                        binding.txtUsername.text =
+                                            state.username
+
                                         allMeals.clear()
 
                                         allMeals.addAll(
@@ -459,7 +450,9 @@ class HomeFragment : Fragment() {
                                                     state.favoriteIds
                                                 )
                                         }
-
+                                        renderRecentlyViewed(
+                                            state.recentlyViewed
+                                        )
 
                                         val recommendationList =
                                             state
@@ -525,64 +518,6 @@ class HomeFragment : Fragment() {
                 }
         }
 
-    // =========================
-    // RECENTLY VIEWED
-    // =========================
-
-    private fun loadRecentlyViewed() {
-
-        lifecycleScope.launch {
-
-            try {
-
-                val viewedList =
-                    viewedRepository.getAllViewed()
-
-                recentlyViewedAdapter =
-
-                    RecentlyViewedAdapter(
-
-                        viewedList
-
-                    ) { recipe ->
-
-                        val bundle =
-                            Bundle()
-
-                        bundle.putString(
-                            "mealId",
-                            recipe.id
-                        )
-
-                        findNavController()
-                            .navigate(
-                                R.id.recipeDetailFragment,
-                                bundle
-                            )
-
-                    }
-
-                binding.rvRecentlyViewed.layoutManager =
-
-                    LinearLayoutManager(
-
-                        requireContext(),
-
-                        LinearLayoutManager.HORIZONTAL,
-
-                        false
-
-                    )
-
-                binding.rvRecentlyViewed.adapter =
-                    recentlyViewedAdapter
-
-            } catch (e: Exception) {
-
-                e.printStackTrace()
-            }
-        }
-    }
 
     private fun setupRecipeAdapter() {
 
@@ -597,36 +532,10 @@ class HomeFragment : Fragment() {
 
                 onItemClick = { recipe ->
 
-                    lifecycleScope.launch {
-
-                        try {
-
-                            val viewedRecipe =
-                                RecentlyViewed(
-
-                                    id =
-                                        recipe.id,
-
-                                    title =
-                                        recipe.title
-                                            ?: "Unknown Recipe",
-
-                                    image =
-                                        recipe.image
-                                )
-
-                            viewedRepository
-                                .insertViewed(
-                                    viewedRecipe
-                                )
-
-                            loadRecentlyViewed()
-
-                        } catch (e: Exception) {
-
-                            e.printStackTrace()
-                        }
-                    }
+                    homeViewModel
+                        .addRecentlyViewed(
+                            recipe
+                        )
 
                     val bundle =
                         Bundle()
@@ -665,10 +574,9 @@ class HomeFragment : Fragment() {
 
         super.onResume()
 
-        loadRecentlyViewed()
-
-        homeViewModel.loadFavorites()
-        }
+        homeViewModel
+            .loadFavorites()
+    }
     override fun onDestroyView() {
 
         super.onDestroyView()
