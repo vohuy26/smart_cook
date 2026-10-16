@@ -1,6 +1,4 @@
 package com.example.smart_cook.ui.fragments
-
-import com.google.firebase.firestore.FieldValue
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,7 +13,6 @@ import com.example.smart_cook.R
 import com.example.smart_cook.data.local.AppDatabase
 import com.example.smart_cook.databinding.FragmentHomeBinding
 import com.example.smart_cook.model.Category
-import com.example.smart_cook.model.FavoriteRecipe
 import com.example.smart_cook.model.Meal
 import com.example.smart_cook.model.RecentlyViewed
 import com.example.smart_cook.model.Recommendation
@@ -29,7 +26,7 @@ import com.example.smart_cook.ui.adapters.RecommendationAdapter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-
+import com.example.smart_cook.repository.CloudFavoriteRepository
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.repeatOnLifecycle
@@ -52,7 +49,11 @@ class HomeFragment : Fragment() {
     private lateinit var recommendationAdapter: RecommendationAdapter
     private lateinit var recentlyViewedAdapter: RecentlyViewedAdapter
 
-    private lateinit var repository: FavoriteRepository
+    private lateinit var favoriteRepository:
+            FavoriteRepository
+
+    private lateinit var cloudFavoriteRepository:
+            CloudFavoriteRepository
     private lateinit var viewedRepository: RecentlyViewedRepository
     private lateinit var recommendationRepository: RecommendationRepository
 
@@ -136,8 +137,13 @@ class HomeFragment : Fragment() {
                 .getDatabase(requireContext())
                 .favoriteDao()
 
-        repository =
-            FavoriteRepository(favoriteDao)
+        favoriteRepository =
+            FavoriteRepository(
+                favoriteDao
+            )
+
+        cloudFavoriteRepository =
+            CloudFavoriteRepository()
 
         // =========================
         // RECENTLY VIEWED DATABASE
@@ -163,17 +169,27 @@ class HomeFragment : Fragment() {
         recommendationRepository =
             RecommendationRepository(searchDao)
 
-            val homeViewModelFactory =
-                HomeViewModelFactory(
-                    mealRepository = mealRepository,
-                    recommendationRepository = recommendationRepository
-                )
+        val homeViewModelFactory =
+            HomeViewModelFactory(
 
-            homeViewModel =
-                ViewModelProvider(
-                    this,
-                    homeViewModelFactory
-                )[HomeViewModel::class.java]
+                mealRepository =
+                    mealRepository,
+
+                recommendationRepository =
+                    recommendationRepository,
+
+                favoriteRepository =
+                    favoriteRepository,
+
+                cloudFavoriteRepository =
+                    cloudFavoriteRepository
+            )
+
+        homeViewModel =
+            ViewModelProvider(
+                this,
+                homeViewModelFactory
+            )[HomeViewModel::class.java]
 
         // =========================
         // SETUP
@@ -183,10 +199,6 @@ class HomeFragment : Fragment() {
         loadRecentlyViewed()
 
         setupRecipeAdapter()
-
-        observeHomeState()
-
-        homeViewModel.loadHome()
 
         binding.layoutSearch.setOnClickListener {
 
@@ -198,6 +210,20 @@ class HomeFragment : Fragment() {
 
         }
         return binding.root
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
+        observeHomeState()
+
+        homeViewModel.loadHome()
     }
 
     // =========================
@@ -397,76 +423,107 @@ class HomeFragment : Fragment() {
     }
     private fun observeHomeState() {
 
-        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner
+                .lifecycleScope
+                .launch {
 
-            viewLifecycleOwner.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
+                    viewLifecycleOwner
+                        .repeatOnLifecycle(
+                            Lifecycle.State.STARTED
+                        ) {
 
-                homeViewModel.uiState.collect { state ->
+                            launch {
 
-                    // =========================
-                    // MEALS
-                    // =========================
+                                homeViewModel
+                                    .uiState
+                                    .collect { state ->
 
-                    allMeals.clear()
-                    allMeals.addAll(state.meals)
+                                        allMeals.clear()
 
-                    if (::recipeAdapter.isInitialized) {
+                                        allMeals.addAll(
+                                            state.meals
+                                        )
 
-                        recipeAdapter.updateData(
-                            state.meals
-                        )
-                    }
+                                        if (
+                                            ::recipeAdapter
+                                                .isInitialized
+                                        ) {
 
-                    // =========================
-                    // RECOMMENDATIONS
-                    // =========================
+                                            recipeAdapter
+                                                .updateData(
+                                                    state.meals
+                                                )
 
-                    val recommendationList =
-                        state.recommendedMeals.map { meal ->
+                                            recipeAdapter
+                                                .setFavoriteIds(
+                                                    state.favoriteIds
+                                                )
+                                        }
 
-                            Recommendation(
-                                title =
-                                    meal.title
-                                        ?: "Unknown Recipe",
 
-                                image =
-                                    meal.image
-                            )
+                                        val recommendationList =
+                                            state
+                                                .recommendedMeals
+                                                .map { meal ->
+
+                                                    Recommendation(
+                                                        title =
+                                                            meal.title
+                                                                ?: "Unknown Recipe",
+
+                                                        image =
+                                                            meal.image
+                                                    )
+                                                }
+
+                                        recommendationAdapter =
+                                            RecommendationAdapter(
+                                                recommendationList
+                                            )
+
+                                        binding
+                                            .rvRecommendations
+                                            .layoutManager =
+                                            LinearLayoutManager(
+                                                requireContext(),
+                                                LinearLayoutManager.HORIZONTAL,
+                                                false
+                                            )
+
+                                        binding
+                                            .rvRecommendations
+                                            .adapter =
+                                            recommendationAdapter
+
+
+                                        state.error?.let {
+
+                                            Toast.makeText(
+                                                requireContext(),
+                                                it,
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    }
+                            }
+
+
+                            launch {
+
+                                homeViewModel
+                                    .favoriteMessage
+                                    .collect { message ->
+
+                                        Toast.makeText(
+                                            requireContext(),
+                                            message,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                            }
                         }
-
-                    recommendationAdapter =
-                        RecommendationAdapter(
-                            recommendationList
-                        )
-
-                    binding.rvRecommendations.layoutManager =
-                        LinearLayoutManager(
-                            requireContext(),
-                            LinearLayoutManager.HORIZONTAL,
-                            false
-                        )
-
-                    binding.rvRecommendations.adapter =
-                        recommendationAdapter
-
-                    // =========================
-                    // ERROR
-                    // =========================
-
-                    state.error?.let { error ->
-
-                        Toast.makeText(
-                            requireContext(),
-                            error,
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
                 }
-            }
         }
-    }
 
     // =========================
     // RECENTLY VIEWED
@@ -529,255 +586,79 @@ class HomeFragment : Fragment() {
 
     private fun setupRecipeAdapter() {
 
-        lifecycleScope.launch {
+        recipeAdapter =
+            RecipeAdapter(
 
-            val favoriteIds =
-                repository
-                    .getAllFavoriteIds()
-                    .toMutableSet()
+                recipeList =
+                    allMeals,
 
-            recipeAdapter =
+                favoriteIds =
+                    mutableSetOf(),
 
-                RecipeAdapter(
+                onItemClick = { recipe ->
 
-                    recipeList = allMeals,
+                    lifecycleScope.launch {
 
-                    favoriteIds = favoriteIds,
+                        try {
 
-                    onItemClick = { recipe ->
+                            val viewedRecipe =
+                                RecentlyViewed(
 
-                        lifecycleScope.launch {
+                                    id =
+                                        recipe.id,
 
-                            try {
+                                    title =
+                                        recipe.title
+                                            ?: "Unknown Recipe",
 
-                                val viewedRecipe =
+                                    image =
+                                        recipe.image
+                                )
 
-                                    RecentlyViewed(
+                            viewedRepository
+                                .insertViewed(
+                                    viewedRecipe
+                                )
 
-                                        id = recipe.id,
+                            loadRecentlyViewed()
 
-                                        title =
-                                            recipe.title
-                                                ?: "Unknown Recipe",
+                        } catch (e: Exception) {
 
-                                        image =
-                                            recipe.image
-
-                                    )
-
-                                viewedRepository
-                                    .insertViewed(
-                                        viewedRecipe
-                                    )
-
-                                loadRecentlyViewed()
-
-                            } catch (e: Exception) {
-
-                                e.printStackTrace()
-                            }
-                        }
-
-                        val bundle =
-                            Bundle()
-
-                        bundle.putString(
-                            "mealId",
-                            recipe.id
-                        )
-
-                        findNavController()
-                            .navigate(
-                                R.id.recipeDetailFragment,
-                                bundle
-                            )
-                    },
-
-                    onFavoriteClick = { recipe ->
-
-                        lifecycleScope.launch {
-
-                            try {
-
-                                val isExist =
-                                    repository.isFavorite(
-                                        recipe.id
-                                    )
-
-                                if (!isExist) {
-
-                                    val favoriteRecipe =
-
-                                        FavoriteRecipe(
-
-                                            id =
-                                                recipe.id,
-
-                                            title =
-                                                recipe.title,
-
-                                            image =
-                                                recipe.image
-
-                                        )
-
-                                    repository
-                                        .insertFavorite(
-                                            favoriteRecipe
-                                        )
-
-                                    recipeAdapter
-                                        .addFavorite(
-                                            recipe.id
-                                        )
-                                    recipeAdapter.notifyDataSetChanged()
-
-                                    val uid =
-                                        auth.currentUser?.uid
-                                            ?: ""
-
-                                    val favoriteMap =
-
-                                        hashMapOf(
-
-                                            "mealId" to recipe.id,
-
-                                            "title" to recipe.title,
-
-                                            "image" to recipe.image,
-
-                                            "source" to recipe.source
-                                        )
-
-                                    firestore
-                                        .collection(
-                                            "favorites"
-                                        )
-                                        .document(uid)
-                                        .collection(
-                                            "meals"
-                                        )
-                                        .document(
-                                            recipe.id
-                                        )
-                                        .set(
-                                            favoriteMap
-                                        )
-
-                                    firestore.collection("favorites")
-                                        .document(uid)
-                                        .collection("meals")
-                                        .document(recipe.id)
-                                        .set(favoriteMap)
-
-                                    if (recipe.source == "firebase") {
-
-                                        firestore.collection("recipes")
-                                            .document(recipe.id)
-                                            .update(
-                                                "favoriteCount",
-                                                FieldValue.increment(1)
-                                            )
-                                    }
-
-                                    Toast.makeText(
-
-                                        requireContext(),
-
-                                        "${recipe.title} added ❤️",
-
-                                        Toast.LENGTH_SHORT
-
-                                    ).show()
-
-                                } else {
-
-                                    repository.deleteFavorite(
-
-                                        FavoriteRecipe(
-
-                                            id =
-                                                recipe.id,
-
-                                            title =
-                                                recipe.title,
-
-                                            image =
-                                                recipe.image
-
-                                        )
-
-                                    )
-
-                                    recipeAdapter
-                                        .removeFavorite(
-                                            recipe.id
-                                        )
-                                    recipeAdapter.notifyDataSetChanged()
-
-                                    val uid =
-                                        auth.currentUser?.uid
-                                            ?: ""
-
-                                    firestore
-                                        .collection(
-                                            "favorites"
-                                        )
-                                        .document(uid)
-                                        .collection(
-                                            "meals"
-                                        )
-                                        .document(
-                                            recipe.id
-                                        )
-                                        .delete()
-
-                                    if (recipe.source == "firebase") {
-
-                                        firestore.collection("recipes")
-                                            .document(recipe.id)
-                                            .update(
-                                                "favoriteCount",
-                                                FieldValue.increment(-1)
-                                            )
-                                    }
-
-                                    Toast.makeText(
-
-                                        requireContext(),
-
-                                        "Removed from favorite",
-
-                                        Toast.LENGTH_SHORT
-
-                                    ).show()
-                                }
-
-                            } catch (e: Exception) {
-
-                                Toast.makeText(
-
-                                    requireContext(),
-
-                                    e.message,
-
-                                    Toast.LENGTH_SHORT
-
-                                ).show()
-                            }
+                            e.printStackTrace()
                         }
                     }
 
-                )
+                    val bundle =
+                        Bundle()
 
-            binding.rvRecipes.layoutManager =
-                LinearLayoutManager(
-                    requireContext()
-                )
+                    bundle.putString(
+                        "mealId",
+                        recipe.id
+                    )
 
-            binding.rvRecipes.adapter =
-                recipeAdapter
-        }
+                    findNavController()
+                        .navigate(
+                            R.id.recipeDetailFragment,
+                            bundle
+                        )
+                },
+
+                onFavoriteClick = { recipe ->
+
+                    homeViewModel
+                        .toggleFavorite(
+                            recipe
+                        )
+                }
+            )
+
+        binding.rvRecipes.layoutManager =
+            LinearLayoutManager(
+                requireContext()
+            )
+
+        binding.rvRecipes.adapter =
+            recipeAdapter
     }
 
     override fun onResume() {
@@ -786,26 +667,8 @@ class HomeFragment : Fragment() {
 
         loadRecentlyViewed()
 
-        lifecycleScope.launch {
-
-            try {
-
-                val favoriteIds =
-                    repository.getAllFavoriteIds()
-
-                if (::recipeAdapter.isInitialized) {
-
-                    recipeAdapter.setFavoriteIds(
-                        favoriteIds.toSet()
-                    )
-                }
-
-            } catch (e: Exception) {
-
-                e.printStackTrace()
-            }
+        homeViewModel.loadFavorites()
         }
-    }
     override fun onDestroyView() {
 
         super.onDestroyView()

@@ -2,13 +2,25 @@ package com.example.smart_cook.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.smart_cook.repository.CloudFavoriteRepository
+import com.example.smart_cook.repository.FavoriteRepository
 import com.example.smart_cook.repository.MealRepository
 import com.example.smart_cook.repository.RecommendationRepository
 
 class HomeViewModelFactory(
-    private val mealRepository: MealRepository,
+
+    private val mealRepository:
+    MealRepository,
+
     private val recommendationRepository:
-        RecommendationRepository
+    RecommendationRepository,
+
+    private val favoriteRepository:
+    FavoriteRepository,
+
+    private val cloudFavoriteRepository:
+    CloudFavoriteRepository
+
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -23,8 +35,19 @@ class HomeViewModelFactory(
         ) {
 
             return HomeViewModel(
-                mealRepository,
-                recommendationRepository
+
+                mealRepository =
+                    mealRepository,
+
+                recommendationRepository =
+                    recommendationRepository,
+
+                favoriteRepository =
+                    favoriteRepository,
+
+                cloudFavoriteRepository =
+                    cloudFavoriteRepository
+
             ) as T
         }
 
