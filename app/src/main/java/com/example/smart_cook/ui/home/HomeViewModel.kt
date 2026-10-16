@@ -18,27 +18,17 @@ import kotlinx.coroutines.launch
 import com.example.smart_cook.model.RecentlyViewed
 import com.example.smart_cook.repository.RecentlyViewedRepository
 import com.example.smart_cook.repository.UserRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class HomeViewModel(
-
-    private val mealRepository:
-    MealRepository,
-
-    private val recommendationRepository:
-    RecommendationRepository,
-
-    private val favoriteRepository:
-    FavoriteRepository,
-
-    private val cloudFavoriteRepository:
-    CloudFavoriteRepository,
-
-    private val recentlyViewedRepository:
-    RecentlyViewedRepository,
-
-    private val userRepository:
-    UserRepository
-
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val mealRepository: MealRepository,
+    private val recommendationRepository: RecommendationRepository,
+    private val favoriteRepository: FavoriteRepository,
+    private val cloudFavoriteRepository: CloudFavoriteRepository,
+    private val recentlyViewedRepository: RecentlyViewedRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState =
