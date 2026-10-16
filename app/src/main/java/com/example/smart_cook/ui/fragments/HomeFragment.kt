@@ -5,40 +5,33 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.smart_cook.R
-import com.example.smart_cook.data.local.AppDatabase
 import com.example.smart_cook.databinding.FragmentHomeBinding
 import com.example.smart_cook.model.Category
 import com.example.smart_cook.model.Meal
 import com.example.smart_cook.model.RecentlyViewed
 import com.example.smart_cook.model.Recommendation
-import com.example.smart_cook.repository.CloudFavoriteRepository
-import com.example.smart_cook.repository.FavoriteRepository
-import com.example.smart_cook.repository.MealRepository
-import com.example.smart_cook.repository.RecentlyViewedRepository
-import com.example.smart_cook.repository.RecommendationRepository
-import com.example.smart_cook.repository.UserRepository
 import com.example.smart_cook.ui.adapters.CategoryAdapter
 import com.example.smart_cook.ui.adapters.RecentlyViewedAdapter
 import com.example.smart_cook.ui.adapters.RecipeAdapter
 import com.example.smart_cook.ui.adapters.RecommendationAdapter
 import com.example.smart_cook.ui.home.HomeViewModel
-import com.example.smart_cook.ui.home.HomeViewModelFactory
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var mealRepository: MealRepository
-    private lateinit var homeViewModel: HomeViewModel
+    private val homeViewModel: HomeViewModel by viewModels()
 
     private var allMeals = mutableListOf<Meal>()
     private lateinit var recipeAdapter: RecipeAdapter
@@ -46,13 +39,6 @@ class HomeFragment : Fragment() {
     private lateinit var recommendationAdapter: RecommendationAdapter
     private lateinit var recentlyViewedAdapter: RecentlyViewedAdapter
 
-    private lateinit var favoriteRepository: FavoriteRepository
-
-    private lateinit var userRepository: UserRepository
-
-    private lateinit var cloudFavoriteRepository: CloudFavoriteRepository
-    private lateinit var recentlyViewedRepository: RecentlyViewedRepository
-    private lateinit var recommendationRepository: RecommendationRepository
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -66,73 +52,6 @@ class HomeFragment : Fragment() {
                 container,
                 false
             )
-
-        userRepository =
-            UserRepository()
-
-        mealRepository =
-            MealRepository()
-
-
-        // =========================
-        // FAVORITE DATABASE
-        // =========================
-
-        val favoriteDao =
-            AppDatabase
-                .getDatabase(requireContext())
-                .favoriteDao()
-
-        favoriteRepository =
-            FavoriteRepository(
-                favoriteDao
-            )
-
-        cloudFavoriteRepository =
-            CloudFavoriteRepository()
-
-        // =========================
-        // RECENTLY VIEWED DATABASE
-        // =========================
-
-        val viewedDao =
-            AppDatabase
-                .getDatabase(requireContext())
-                .recentlyViewedDao()
-
-        recentlyViewedRepository =
-            RecentlyViewedRepository(
-                viewedDao
-            )
-
-        // =========================
-        // SEARCH DATABASE
-        // =========================
-
-        val searchDao =
-            AppDatabase
-                .getDatabase(requireContext())
-                .searchHistoryDao()
-
-        recommendationRepository =
-            RecommendationRepository(searchDao)
-
-        val homeViewModelFactory =
-            HomeViewModelFactory(
-                mealRepository = mealRepository,
-                recommendationRepository = recommendationRepository,
-                favoriteRepository = favoriteRepository,
-                cloudFavoriteRepository = cloudFavoriteRepository,
-                recentlyViewedRepository = recentlyViewedRepository,
-                userRepository = userRepository
-            )
-
-        homeViewModel =
-            ViewModelProvider(
-                this,
-                homeViewModelFactory
-            )[HomeViewModel::class.java]
-
         // =========================
         // SETUP
         // =========================

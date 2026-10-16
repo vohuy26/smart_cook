@@ -8,7 +8,9 @@ import com.example.smart_cook.R
 import com.example.smart_cook.databinding.ActivityMainBinding
 import com.example.smart_cook.utils.CloudinaryManager
 import com.example.smart_cook.utils.ThemeManager
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
