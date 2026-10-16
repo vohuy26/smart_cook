@@ -5,8 +5,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.example.smart_cook.repository.MealRepository
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.smart_cook.R
@@ -16,21 +18,19 @@ import com.example.smart_cook.model.Category
 import com.example.smart_cook.model.Meal
 import com.example.smart_cook.model.RecentlyViewed
 import com.example.smart_cook.model.Recommendation
+import com.example.smart_cook.repository.CloudFavoriteRepository
 import com.example.smart_cook.repository.FavoriteRepository
+import com.example.smart_cook.repository.MealRepository
 import com.example.smart_cook.repository.RecentlyViewedRepository
 import com.example.smart_cook.repository.RecommendationRepository
+import com.example.smart_cook.repository.UserRepository
 import com.example.smart_cook.ui.adapters.CategoryAdapter
 import com.example.smart_cook.ui.adapters.RecentlyViewedAdapter
 import com.example.smart_cook.ui.adapters.RecipeAdapter
 import com.example.smart_cook.ui.adapters.RecommendationAdapter
-import kotlinx.coroutines.launch
-import com.example.smart_cook.repository.CloudFavoriteRepository
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.repeatOnLifecycle
-import com.example.smart_cook.repository.UserRepository
 import com.example.smart_cook.ui.home.HomeViewModel
 import com.example.smart_cook.ui.home.HomeViewModelFactory
+import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
 
@@ -53,40 +53,6 @@ class HomeFragment : Fragment() {
     private lateinit var cloudFavoriteRepository: CloudFavoriteRepository
     private lateinit var recentlyViewedRepository: RecentlyViewedRepository
     private lateinit var recommendationRepository: RecommendationRepository
-
-    private val categoryMapping = mapOf(
-
-        "Món mặn 🍲" to listOf(
-            "Beef",
-            "Chicken",
-            "Seafood",
-            "Pork",
-            "Lamb",
-            "Goat"
-        ),
-
-        "Món chay 🥗" to listOf(
-            "Vegetarian",
-            "Vegan"
-        ),
-
-        "Canh 🍜" to listOf(
-            "Soup"
-        ),
-
-        "Tráng miệng 🍰" to listOf(
-            "Dessert"
-        ),
-
-        "Đồ uống 🥤" to listOf(
-            "Drinks"
-        ),
-
-        "Ăn nhanh 🍔" to listOf(
-            "Breakfast"
-        )
-
-    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -573,6 +539,9 @@ class HomeFragment : Fragment() {
     override fun onResume() {
 
         super.onResume()
+
+        homeViewModel
+            .loadRecentlyViewed()
 
         homeViewModel
             .loadFavorites()

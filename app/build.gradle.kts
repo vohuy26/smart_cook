@@ -6,6 +6,8 @@ plugins {
 
     kotlin("kapt")
 
+    alias(libs.plugins.hilt)
+
     id("com.google.gms.google-services")
 }
 
@@ -77,7 +79,14 @@ android {
 
 }
 
+kapt {
+    correctErrorTypes = true
+}
+
 dependencies {
+    // Hilt
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
 
     // Core
     implementation(libs.core.ktx)
