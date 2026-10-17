@@ -7,40 +7,46 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import com.example.smart_cook.R
 
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.navigation.fragment.findNavController
 
-import com.example.smart_cook.data.local.AppDatabase
+import com.example.smart_cook.R
 import com.example.smart_cook.databinding.FragmentFavoriteBinding
-import com.example.smart_cook.model.FavoriteRecipe
-import com.example.smart_cook.repository.FavoriteRepository
 import com.example.smart_cook.ui.adapters.FavoriteAdapter
+import com.example.smart_cook.ui.favorite.FavoriteViewModel
+
+import dagger.hilt.android.AndroidEntryPoint
 
 import kotlinx.coroutines.launch
 
+
+@AndroidEntryPoint
 class FavoriteFragment : Fragment() {
 
-    private var _binding: FragmentFavoriteBinding? = null
-    private val binding get() = _binding!!
+    private var _binding:
+            FragmentFavoriteBinding? = null
 
-    private lateinit var favoriteAdapter: FavoriteAdapter
-    private lateinit var repository: FavoriteRepository
+    private val binding
+        get() = _binding!!
+
+    private val viewModel:
+            FavoriteViewModel by viewModels()
+
+    private lateinit var favoriteAdapter:
+            FavoriteAdapter
+
 
     // =========================
-    // FAVORITE LIST
+    // CREATE VIEW
     // =========================
-
-    private val favoriteList =
-        mutableListOf<FavoriteRecipe>()
-
-    private val allFavoriteList =
-        mutableListOf<FavoriteRecipe>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,99 +61,33 @@ class FavoriteFragment : Fragment() {
                 false
             )
 
-        val dao =
-            AppDatabase
-                .getDatabase(requireContext())
-                .favoriteDao()
-
-        repository =
-            FavoriteRepository(dao)
-
         setupRecyclerView()
 
-        setupSwipeDelete()
-
-        loadFavorites()
-
         setupSearch()
+
+        setupSwipeDelete()
 
         return binding.root
     }
 
+
     // =========================
-    // SEARCH
+    // VIEW CREATED
     // =========================
 
-    private fun setupSearch() {
-
-        binding.edtSearch.addTextChangedListener(
-
-            object : TextWatcher {
-
-                override fun beforeTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    count: Int,
-                    after: Int
-                ) {
-                }
-
-                override fun onTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    before: Int,
-                    count: Int
-                ) {
-
-                    searchFavorite(
-                        s.toString()
-                    )
-                }
-
-                override fun afterTextChanged(
-                    s: Editable?
-                ) {
-                }
-            }
-        )
-    }
-
-    private fun searchFavorite(
-        keyword: String
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
     ) {
 
-        val filteredList =
-
-            allFavoriteList.filter {
-
-                it.title.contains(
-                    keyword,
-                    ignoreCase = true
-                )
-
-            }
-
-        favoriteAdapter.updateList(
-            filteredList
+        super.onViewCreated(
+            view,
+            savedInstanceState
         )
 
-        if (filteredList.isEmpty()) {
-
-            binding.layoutEmpty.visibility =
-                View.VISIBLE
-
-            binding.rvFavorites.visibility =
-                View.GONE
-
-        } else {
-
-            binding.layoutEmpty.visibility =
-                View.GONE
-
-            binding.rvFavorites.visibility =
-                View.VISIBLE
-        }
+        observeState()
     }
+
 
     // =========================
     // RECYCLER VIEW
@@ -156,17 +96,16 @@ class FavoriteFragment : Fragment() {
     private fun setupRecyclerView() {
 
         favoriteAdapter =
-
             FavoriteAdapter(
 
-                favoriteList,
+                mutableListOf(),
 
                 onDelete = { recipe ->
 
-                    deleteFavorite(
-                        recipe
-                    )
-
+                    viewModel
+                        .deleteFavorite(
+                            recipe
+                        )
                 },
 
                 onItemClick = { recipe ->
@@ -184,145 +123,156 @@ class FavoriteFragment : Fragment() {
                             R.id.recipeDetailFragment,
                             bundle
                         )
-
                 }
-
             )
 
         binding.rvFavorites.layoutManager =
-
             LinearLayoutManager(
                 requireContext()
             )
 
         binding.rvFavorites.adapter =
             favoriteAdapter
-
     }
+
+
     // =========================
-    // LOAD FAVORITES
+    // SEARCH
     // =========================
 
-    private fun loadFavorites() {
+    private fun setupSearch() {
 
-        lifecycleScope.launch {
+        binding.edtSearch
+            .addTextChangedListener(
 
-            try {
+                object : TextWatcher {
 
-                val favorites =
-                    repository.getAllFavorites()
+                    override fun beforeTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        count: Int,
+                        after: Int
+                    ) {
+                    }
 
-                allFavoriteList.clear()
 
-                allFavoriteList.addAll(
-                    favorites
-                )
+                    override fun onTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        before: Int,
+                        count: Int
+                    ) {
 
-                favoriteList.clear()
+                        viewModel
+                            .searchFavorite(
+                                s?.toString()
+                                    .orEmpty()
+                            )
+                    }
 
-                favoriteList.addAll(
-                    favorites
-                )
 
-                favoriteAdapter.updateList(
-                    favorites
-                )
+                    override fun afterTextChanged(
+                        s: Editable?
+                    ) {
+                    }
+                }
+            )
+    }
 
-                checkEmptyState()
 
-            } catch (e: Exception) {
+    // =========================
+    // OBSERVE STATE
+    // =========================
 
-                Toast.makeText(
+    private fun observeState() {
 
-                    requireContext(),
+        viewLifecycleOwner
+            .lifecycleScope
+            .launch {
 
-                    e.message,
+                viewLifecycleOwner
+                    .repeatOnLifecycle(
+                        Lifecycle.State.STARTED
+                    ) {
 
-                    Toast.LENGTH_SHORT
+                        // =========================
+                        // UI STATE
+                        // =========================
 
-                ).show()
+                        launch {
+
+                            viewModel
+                                .uiState
+                                .collect { state ->
+
+                                    favoriteAdapter
+                                        .updateList(
+                                            state.favorites
+                                        )
+
+
+                                    binding
+                                        .layoutEmpty
+                                        .visibility =
+
+                                        if (state.isEmpty) {
+
+                                            View.VISIBLE
+
+                                        } else {
+
+                                            View.GONE
+                                        }
+
+
+                                    binding
+                                        .rvFavorites
+                                        .visibility =
+
+                                        if (state.isEmpty) {
+
+                                            View.GONE
+
+                                        } else {
+
+                                            View.VISIBLE
+                                        }
+
+
+                                    state.error
+                                        ?.let { message ->
+
+                                            Toast.makeText(
+                                                requireContext(),
+                                                message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                }
+                        }
+
+
+                        // =========================
+                        // MESSAGE
+                        // =========================
+
+                        launch {
+
+                            viewModel
+                                .message
+                                .collect { message ->
+
+                                    Toast.makeText(
+                                        requireContext(),
+                                        message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                        }
+                    }
             }
-        }
     }
 
-    // =========================
-    // EMPTY STATE
-    // =========================
-
-    private fun checkEmptyState() {
-
-        if (favoriteList.isEmpty()) {
-
-            binding.layoutEmpty.visibility =
-                View.VISIBLE
-
-            binding.rvFavorites.visibility =
-                View.GONE
-
-        } else {
-
-            binding.layoutEmpty.visibility =
-                View.GONE
-
-            binding.rvFavorites.visibility =
-                View.VISIBLE
-        }
-    }
-
-    // =========================
-    // DELETE FAVORITE
-    // =========================
-
-    private fun deleteFavorite(
-        recipe: FavoriteRecipe
-    ) {
-
-        lifecycleScope.launch {
-
-            try {
-
-                repository.deleteFavorite(
-                    recipe
-                )
-
-                favoriteList.remove(
-                    recipe
-                )
-
-                allFavoriteList.remove(
-                    recipe
-                )
-
-                favoriteAdapter.updateList(
-                    favoriteList
-                )
-
-                checkEmptyState()
-
-                Toast.makeText(
-
-                    requireContext(),
-
-                    "Removed from favorite ❤️",
-
-                    Toast.LENGTH_SHORT
-
-                ).show()
-
-            } catch (e: Exception) {
-
-                Toast.makeText(
-
-                    requireContext(),
-
-                    e.message,
-
-                    Toast.LENGTH_SHORT
-
-                ).show()
-            }
-        }
-    }
 
     // =========================
     // SWIPE DELETE
@@ -332,10 +282,11 @@ class FavoriteFragment : Fragment() {
 
         val swipeHandler =
 
-            object : ItemTouchHelper.SimpleCallback(
-                0,
-                ItemTouchHelper.LEFT
-            ) {
+            object :
+                ItemTouchHelper.SimpleCallback(
+                    0,
+                    ItemTouchHelper.LEFT
+                ) {
 
                 override fun onMove(
                     recyclerView: RecyclerView,
@@ -346,43 +297,68 @@ class FavoriteFragment : Fragment() {
                     return false
                 }
 
+
                 override fun onSwiped(
                     viewHolder: RecyclerView.ViewHolder,
                     direction: Int
                 ) {
 
                     val position =
-                        viewHolder.adapterPosition
+                        viewHolder.bindingAdapterPosition
 
-                    val recipe =
-                        favoriteList[position]
+                    val currentFavorites =
+                        viewModel
+                            .uiState
+                            .value
+                            .favorites
 
-                    deleteFavorite(
-                        recipe
-                    )
+                    if (
+                        position != RecyclerView.NO_POSITION &&
+                        position < currentFavorites.size
+                    ) {
+
+                        val recipe =
+                            currentFavorites[position]
+
+                        viewModel
+                            .deleteFavorite(
+                                recipe
+                            )
+                    }
                 }
             }
 
+
         ItemTouchHelper(
             swipeHandler
-        ).attachToRecyclerView(
-            binding.rvFavorites
         )
+            .attachToRecyclerView(
+                binding.rvFavorites
+            )
     }
+
+
+    // =========================
+    // RESUME
+    // =========================
 
     override fun onResume() {
 
         super.onResume()
 
-        loadFavorites()
-
+        viewModel
+            .loadFavorites()
     }
+
+
+    // =========================
+    // DESTROY
+    // =========================
 
     override fun onDestroyView() {
 
         super.onDestroyView()
 
         _binding = null
-
     }
 }
