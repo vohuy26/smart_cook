@@ -8,6 +8,7 @@ import com.example.smart_cook.repository.FavoriteRepository
 import com.example.smart_cook.repository.MealRepository
 import com.example.smart_cook.repository.RecentlyViewedRepository
 import com.example.smart_cook.repository.RecommendationRepository
+import com.example.smart_cook.repository.SearchRepository
 import com.example.smart_cook.repository.UserRepository
 import dagger.Module
 import dagger.Provides
@@ -27,6 +28,7 @@ object RepositoryModule {
         return MealRepository()
     }
 
+
     @Provides
     @Singleton
     fun provideFavoriteRepository(
@@ -37,6 +39,7 @@ object RepositoryModule {
             favoriteDao
         )
     }
+
 
     @Provides
     @Singleton
@@ -49,6 +52,7 @@ object RepositoryModule {
         )
     }
 
+
     @Provides
     @Singleton
     fun provideRecommendationRepository(
@@ -60,6 +64,19 @@ object RepositoryModule {
         )
     }
 
+
+    @Provides
+    @Singleton
+    fun provideSearchRepository(
+        searchHistoryDao: SearchHistoryDao
+    ): SearchRepository {
+
+        return SearchRepository(
+            searchHistoryDao
+        )
+    }
+
+
     @Provides
     @Singleton
     fun provideCloudFavoriteRepository():
@@ -67,6 +84,7 @@ object RepositoryModule {
 
         return CloudFavoriteRepository()
     }
+
 
     @Provides
     @Singleton

@@ -13,21 +13,38 @@ interface SearchHistoryDao {
         searchHistory: SearchHistory
     )
 
-    // Get all search history
+    @Query(
+        "DELETE FROM search_history WHERE keyword = :keyword"
+    )
+    suspend fun deleteByKeyword(
+        keyword: String
+    )
+
+    @Query(
+        """
+        DELETE FROM search_history
+        WHERE id NOT IN (
+            SELECT id
+            FROM search_history
+            ORDER BY id DESC
+            LIMIT 10
+        )
+        """
+    )
+    suspend fun keepLatestTen()
+
     @Query(
         "SELECT * FROM search_history ORDER BY id DESC"
     )
     suspend fun getAllSearchHistory():
             List<SearchHistory>
 
-    // Get recent keywords for AI recommendation
     @Query(
         "SELECT keyword FROM search_history ORDER BY id DESC LIMIT 10"
     )
     suspend fun getRecentKeywords():
             List<String>
 
-    // Clear history
     @Query(
         "DELETE FROM search_history"
     )

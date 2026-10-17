@@ -3,6 +3,7 @@ package com.example.smart_cook.repository
 import com.example.smart_cook.data.remote.RetrofitClient
 import com.example.smart_cook.model.Meal
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 class MealRepository {
 
@@ -93,5 +94,127 @@ class MealRepository {
                     callback(null)
                 }
             }
+    }
+
+    suspend fun searchMeals(
+        keyword: String
+    ): List<Meal> {
+
+        val response =
+            RetrofitClient.api
+                .searchMeals(keyword)
+
+        val apiMeals =
+            if (response.isSuccessful) {
+
+                response.body()
+                    ?.meals
+                    ?.map {
+
+                        Meal(
+                            id = it.id,
+                            title = it.title ?: "",
+                            image = it.image,
+                            category = it.category ?: "",
+                            area = it.area ?: "",
+                            instructions =
+                                it.instructions ?: "",
+                            youtube =
+                                it.youtube ?: "",
+                            source = "api"
+                        )
+                    }
+                    ?: emptyList()
+
+            } else {
+
+                emptyList()
+            }
+
+
+        val firebaseSnapshot =
+            db.collection("recipes")
+                .get()
+                .await()
+
+        val firebaseMeals =
+            firebaseSnapshot
+                .documents
+                .mapNotNull { document ->
+
+                    document
+                        .toObject(Meal::class.java)
+                        ?.apply {
+
+                            id = document.id
+                            source = "firebase"
+
+                            createdAt =
+                                document.getLong(
+                                    "createdAt"
+                                ) ?: 0L
+                        }
+                }
+
+
+        val firebaseResult =
+            firebaseMeals.filter {
+
+                it.title.contains(
+                    keyword,
+                    ignoreCase = true
+                )
+            }
+
+
+        return apiMeals +
+                firebaseResult
+    }
+
+    suspend fun getRandomMeals(
+        count: Int = 10
+    ): List<Meal> {
+
+        val randomMeals =
+            mutableListOf<Meal>()
+
+        repeat(count) {
+
+            val response =
+                RetrofitClient.api
+                    .getRandomMeal()
+
+            if (response.isSuccessful) {
+
+                response.body()
+                    ?.meals
+                    ?.firstOrNull()
+                    ?.let {
+
+                        randomMeals.add(
+
+                            Meal(
+                                id = it.id,
+                                title =
+                                    it.title ?: "",
+                                image =
+                                    it.image,
+                                category =
+                                    it.category ?: "",
+                                area =
+                                    it.area ?: "",
+                                instructions =
+                                    it.instructions
+                                        ?: "",
+                                youtube =
+                                    it.youtube ?: "",
+                                source = "api"
+                            )
+                        )
+                    }
+            }
+        }
+
+        return randomMeals
     }
 }
