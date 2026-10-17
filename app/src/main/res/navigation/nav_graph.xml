@@ -34,4 +34,9 @@
         android:name="com.example.smart_cook.ui.fragments.RecipeDetailFragment"
         android:label="Recipe Detail"/>
 
+    <fragment
+        android:id="@+id/notificationFragment"
+        android:name="com.example.smart_cook.ui.fragments.NotificationFragment"
+        android:label="Notification" />
+
 </navigation>

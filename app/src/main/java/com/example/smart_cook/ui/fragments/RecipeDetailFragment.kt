@@ -109,15 +109,6 @@ class RecipeDetailFragment : Fragment() {
 
     private fun setupListeners() {
 
-        binding.btnBack
-            .setOnClickListener {
-
-                requireActivity()
-                    .onBackPressedDispatcher
-                    .onBackPressed()
-            }
-
-
         binding.btnFavorite
             .setOnClickListener {
 

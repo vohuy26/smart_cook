@@ -4,22 +4,40 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.smart_cook.databinding.FragmentNotificationBinding
-import com.example.smart_cook.model.Notification
-import com.example.smart_cook.ui.adapters.NotificationAdapter
-import com.google.firebase.firestore.FirebaseFirestore
+import android.widget.Toast
 
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+
+import com.example.smart_cook.databinding.FragmentNotificationBinding
+import com.example.smart_cook.ui.adapters.NotificationAdapter
+import com.example.smart_cook.ui.notification.NotificationViewModel
+
+import dagger.hilt.android.AndroidEntryPoint
+
+import kotlinx.coroutines.launch
+
+
+@AndroidEntryPoint
 class NotificationFragment : Fragment() {
 
     private var _binding:
             FragmentNotificationBinding? = null
 
-    private val binding get() = _binding!!
+    private val binding
+        get() = _binding!!
 
-    private lateinit var firestore:
-            FirebaseFirestore
+    private val viewModel:
+            NotificationViewModel by viewModels()
+
+
+    // =========================
+    // CREATE VIEW
+    // =========================
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,34 +52,116 @@ class NotificationFragment : Fragment() {
                 false
             )
 
-        firestore =
-            FirebaseFirestore.getInstance()
-
-        loadNotifications()
+        setupRecyclerView()
 
         return binding.root
     }
 
-    private fun loadNotifications() {
 
-        firestore.collection("notifications")
-            .get()
-            .addOnSuccessListener {
+    // =========================
+    // VIEW CREATED
+    // =========================
 
-                val list =
-                    it.toObjects(
-                        Notification::class.java
-                    )
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
 
-                binding.rvNotifications.layoutManager =
-                    LinearLayoutManager(
-                        requireContext()
-                    )
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-                binding.rvNotifications.adapter =
-                    NotificationAdapter(list)
+        observeState()
+    }
+
+
+    // =========================
+    // RECYCLER VIEW
+    // =========================
+
+    private fun setupRecyclerView() {
+
+        binding.rvNotifications.layoutManager =
+            LinearLayoutManager(
+                requireContext()
+            )
+
+        binding.rvNotifications.adapter =
+            NotificationAdapter(
+                emptyList()
+            )
+    }
+
+
+    // =========================
+    // OBSERVE STATE
+    // =========================
+
+    private fun observeState() {
+
+        viewLifecycleOwner
+            .lifecycleScope
+            .launch {
+
+                viewLifecycleOwner
+                    .repeatOnLifecycle(
+                        Lifecycle.State.STARTED
+                    ) {
+
+                        viewModel
+                            .uiState
+                            .collect { state ->
+
+                                binding.rvNotifications.adapter =
+                                    NotificationAdapter(
+                                        state.notifications
+                                    )
+
+
+                                binding.rvNotifications.visibility =
+
+                                    if (state.isEmpty) {
+
+                                        View.GONE
+
+                                    } else {
+
+                                        View.VISIBLE
+                                    }
+
+
+                                state.error
+                                    ?.let { message ->
+
+                                        Toast.makeText(
+                                            requireContext(),
+                                            message,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                            }
+                    }
             }
     }
+
+
+    // =========================
+    // RESUME
+    // =========================
+
+    override fun onResume() {
+
+        super.onResume()
+
+        viewModel
+            .loadNotifications()
+    }
+
+
+    // =========================
+    // DESTROY
+    // =========================
 
     override fun onDestroyView() {
 

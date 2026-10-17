@@ -52,12 +52,16 @@ class HomeFragment : Fragment() {
                 container,
                 false
             )
+
         // =========================
         // SETUP
         // =========================
+
         setupCategories()
 
         setupRecipeAdapter()
+
+        setupNotification()
 
         binding.layoutSearch.setOnClickListener {
 
@@ -65,10 +69,23 @@ class HomeFragment : Fragment() {
                 .findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(
                     R.id.bottomNavigationView
                 )
-                .selectedItemId = R.id.searchFragment
-
+                .selectedItemId =
+                R.id.searchFragment
         }
+
         return binding.root
+    }
+
+    private fun setupNotification() {
+
+        binding.cardNotification
+            .setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.notificationFragment
+                    )
+            }
     }
 
     override fun onViewCreated(

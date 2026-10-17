@@ -16,6 +16,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import com.example.smart_cook.repository.AvatarRepository
+import com.example.smart_cook.repository.NotificationRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -100,5 +101,13 @@ object RepositoryModule {
             UserRepository {
 
         return UserRepository()
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationRepository():
+            NotificationRepository {
+
+        return NotificationRepository()
     }
 }
