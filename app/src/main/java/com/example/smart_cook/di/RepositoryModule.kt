@@ -15,6 +15,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import com.example.smart_cook.repository.AvatarRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -76,6 +77,13 @@ object RepositoryModule {
         )
     }
 
+    @Provides
+    @Singleton
+    fun provideAvatarRepository():
+            AvatarRepository {
+
+        return AvatarRepository()
+    }
 
     @Provides
     @Singleton

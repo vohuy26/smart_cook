@@ -1,58 +1,76 @@
 package com.example.smart_cook.ui.fragments
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+
 import com.bumptech.glide.Glide
-import com.cloudinary.android.MediaManager
-import com.cloudinary.android.callback.ErrorInfo
-import com.cloudinary.android.callback.UploadCallback
+
 import com.example.smart_cook.R
-import com.example.smart_cook.data.local.AppDatabase
 import com.example.smart_cook.databinding.FragmentProfileBinding
-import com.example.smart_cook.repository.FavoriteRepository
 import com.example.smart_cook.ui.activities.EditProfileActivity
 import com.example.smart_cook.ui.activities.LoginActivity
+import com.example.smart_cook.ui.profile.ProfileViewModel
 import com.example.smart_cook.utils.ThemeManager
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+
+import dagger.hilt.android.AndroidEntryPoint
+
 import kotlinx.coroutines.launch
 
+
+@AndroidEntryPoint
 class ProfileFragment : Fragment() {
 
-    private var _binding: FragmentProfileBinding? = null
-    private val binding get() = _binding!!
+    private var _binding:
+            FragmentProfileBinding? = null
 
-    private lateinit var auth: FirebaseAuth
-    private lateinit var firestore: FirebaseFirestore
+    private val binding
+        get() = _binding!!
 
-    private lateinit var repository: FavoriteRepository
+    private val viewModel:
+            ProfileViewModel by viewModels()
 
-    private var imageUri: Uri? = null
 
-    // Image Picker
+    // =========================
+    // IMAGE PICKER
+    // =========================
+
     private val imagePickerLauncher =
         registerForActivityResult(
             ActivityResultContracts.GetContent()
         ) { uri ->
 
-            uri?.let {
+            uri ?: return@registerForActivityResult
 
-                imageUri = it
+            // Preview ngay ảnh vừa chọn
+            _binding
+                ?.imgAvatar
+                ?.setImageURI(
+                    uri
+                )
 
-                // Hiển thị ngay
-                binding.imgAvatar.setImageURI(it)
-
-                // Upload Cloudinary
-                uploadAvatarToCloudinary(it)
-            }
+            // ViewModel xử lý:
+            // Cloudinary -> Firestore -> State
+            viewModel
+                .uploadAvatar(
+                    uri.toString()
+                )
         }
+
+
+    // =========================
+    // CREATE VIEW
+    // =========================
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -60,269 +78,300 @@ class ProfileFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        _binding = FragmentProfileBinding.inflate(
-            inflater,
-            container,
-            false
-        )
-
-        initFirebase()
-
-        initDatabase()
-
-        loadUserInfo()
-
-        loadFavoriteCount()
+        _binding =
+            FragmentProfileBinding.inflate(
+                inflater,
+                container,
+                false
+            )
 
         setupDarkMode()
 
         setupEditProfile()
 
-        setupAvatarUpload()
+        setupAvatarPicker()
 
         setupLogout()
 
         return binding.root
     }
 
-    private fun initFirebase() {
 
-        auth = FirebaseAuth.getInstance()
+    // =========================
+    // VIEW CREATED
+    // =========================
 
-        firestore = FirebaseFirestore.getInstance()
-    }
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
 
-    private fun initDatabase() {
-
-        val dao = AppDatabase
-            .getDatabase(requireContext())
-            .favoriteDao()
-
-        repository = FavoriteRepository(dao)
-    }
-
-    private fun loadUserInfo() {
-
-        val currentUser = auth.currentUser
-
-        if (currentUser == null) {
-
-            binding.txtUsername.text = "Guest"
-
-            binding.txtEmail.text = "No Email"
-
-            return
-        }
-
-        // Email
-        binding.txtEmail.text =
-            currentUser.email ?: "No Email"
-
-        // Firestore user data
-        firestore.collection("users")
-            .document(currentUser.uid)
-            .get()
-            .addOnSuccessListener { document ->
-
-                val username =
-                    document.getString("username")
-                        ?: "Smart Cook User"
-
-                binding.txtUsername.text = username
-
-                // Avatar
-                val avatarUrl =
-                    document.getString("avatar")
-
-                if (!avatarUrl.isNullOrEmpty()) {
-
-                    Glide.with(requireContext())
-                        .load(avatarUrl)
-                        .placeholder(R.drawable.ic_chef)
-                        .error(R.drawable.ic_chef)
-                        .circleCrop()
-                        .into(binding.imgAvatar)
-
-                } else {
-
-                    binding.imgAvatar.setImageResource(
-                        R.drawable.ic_chef
-                    )
-                }
-            }
-    }
-
-    private fun setupAvatarUpload() {
-
-        binding.imgAvatar.setOnClickListener {
-
-            imagePickerLauncher.launch("image/*")
-        }
-    }
-
-    // Upload avatar to Cloudinary
-    private fun uploadAvatarToCloudinary(uri: Uri) {
-
-        MediaManager.get().upload(uri)
-            .unsigned("smartcook_avatar")
-            .option("folder", "smartcook_avatar")
-            .callback(object : UploadCallback {
-
-                override fun onStart(requestId: String?) {
-
-                }
-
-                override fun onProgress(
-                    requestId: String?,
-                    bytes: Long,
-                    totalBytes: Long
-                ) {
-
-                }
-
-                override fun onSuccess(
-                    requestId: String?,
-                    resultData: MutableMap<Any?, Any?>?
-                ) {
-
-                    val imageUrl =
-                        resultData?.get("secure_url") as? String
-
-                    if (!imageUrl.isNullOrEmpty()) {
-
-                        saveAvatarUrl(imageUrl)
-                    }
-                }
-
-                override fun onError(
-                    requestId: String?,
-                    error: ErrorInfo?
-                ) {
-
-                    println(error?.description)
-                }
-
-                override fun onReschedule(
-                    requestId: String?,
-                    error: ErrorInfo?
-                ) {
-
-                }
-            })
-            .dispatch()
-    }
-
-    // Save avatar url to Firestore
-    private fun saveAvatarUrl(url: String) {
-
-        val currentUser = auth.currentUser ?: return
-
-        val updates = hashMapOf<String, Any>(
-            "avatar" to url
+        super.onViewCreated(
+            view,
+            savedInstanceState
         )
 
-        firestore.collection("users")
-            .document(currentUser.uid)
-            .set(
-                updates,
-                com.google.firebase.firestore.SetOptions.merge()
-            )
-            .addOnSuccessListener {
+        observeProfileState()
+    }
 
-                println("FIRESTORE SAVE SUCCESS")
 
-                Glide.with(requireContext())
-                    .load(url)
-                    .circleCrop()
-                    .into(binding.imgAvatar)
-            }
-            .addOnFailureListener {
+    // =========================
+    // OBSERVE STATE
+    // =========================
 
-                println("FIRESTORE ERROR = ${it.message}")
+    private fun observeProfileState() {
+
+        viewLifecycleOwner
+            .lifecycleScope
+            .launch {
+
+                viewLifecycleOwner
+                    .repeatOnLifecycle(
+                        Lifecycle.State.STARTED
+                    ) {
+
+                        // =========================
+                        // UI STATE
+                        // =========================
+
+                        launch {
+
+                            viewModel
+                                .uiState
+                                .collect { state ->
+
+                                    binding.txtUsername.text =
+                                        state.username
+
+                                    binding.txtEmail.text =
+                                        state.email
+
+                                    binding.txtFavoriteCount.text =
+                                        state.favoriteCount
+                                            .toString()
+
+
+                                    // =========================
+                                    // AVATAR
+                                    // =========================
+
+                                    /*
+                                     * Khi đang upload:
+                                     * giữ preview local mà user vừa chọn.
+                                     *
+                                     * Khi upload xong:
+                                     * avatarUrl thay đổi và Glide
+                                     * load URL Cloudinary mới.
+                                     */
+                                    if (!state.isUploadingAvatar) {
+
+                                        showAvatar(
+                                            state.avatarUrl
+                                        )
+                                    }
+
+
+                                    // Không cho bấm avatar
+                                    // liên tục khi đang upload.
+                                    binding.imgAvatar.isEnabled =
+                                        !state.isUploadingAvatar
+
+
+                                    state.error
+                                        ?.let { message ->
+
+                                            Toast.makeText(
+                                                requireContext(),
+                                                message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                }
+                        }
+
+
+                        // =========================
+                        // MESSAGE
+                        // =========================
+
+                        launch {
+
+                            viewModel
+                                .message
+                                .collect { message ->
+
+                                    Toast.makeText(
+                                        requireContext(),
+                                        message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                        }
+                    }
             }
     }
+
+
+    // =========================
+    // AVATAR UI
+    // =========================
+
+    private fun showAvatar(
+        avatarUrl: String?
+    ) {
+
+        if (!avatarUrl.isNullOrBlank()) {
+
+            Glide.with(
+                binding.imgAvatar
+            )
+                .load(
+                    avatarUrl
+                )
+                .placeholder(
+                    R.drawable.ic_chef
+                )
+                .error(
+                    R.drawable.ic_chef
+                )
+                .circleCrop()
+                .into(
+                    binding.imgAvatar
+                )
+
+        } else {
+
+            binding.imgAvatar
+                .setImageResource(
+                    R.drawable.ic_chef
+                )
+        }
+    }
+
+
+    // =========================
+    // AVATAR PICKER
+    // =========================
+
+    private fun setupAvatarPicker() {
+
+        binding.imgAvatar
+            .setOnClickListener {
+
+                imagePickerLauncher
+                    .launch(
+                        "image/*"
+                    )
+            }
+    }
+
+
+    // =========================
+    // DARK MODE
+    // =========================
 
     private fun setupDarkMode() {
 
         val isDarkMode =
-            ThemeManager.isDarkMode(
-                requireContext()
-            )
+            ThemeManager
+                .isDarkMode(
+                    requireContext()
+                )
 
         binding.switchDark.isChecked =
             isDarkMode
 
+
         binding.switchDark
             .setOnCheckedChangeListener { _, isChecked ->
 
-                ThemeManager.saveTheme(
-                    requireContext(),
-                    isChecked
-                )
+                ThemeManager
+                    .saveTheme(
+                        requireContext(),
+                        isChecked
+                    )
 
-                ThemeManager.applyTheme(
-                    isChecked
-                )
+                ThemeManager
+                    .applyTheme(
+                        isChecked
+                    )
             }
     }
 
-    private fun loadFavoriteCount() {
 
-        lifecycleScope.launch {
-
-            try {
-
-                val favoriteList =
-                    repository.getAllFavorites()
-
-                binding.txtFavoriteCount.text =
-                    favoriteList.size.toString()
-
-            } catch (e: Exception) {
-
-                binding.txtFavoriteCount.text = "0"
-            }
-        }
-    }
+    // =========================
+    // EDIT PROFILE
+    // =========================
 
     private fun setupEditProfile() {
 
-        binding.cardEditProfile.setOnClickListener {
+        binding.cardEditProfile
+            .setOnClickListener {
 
-            startActivity(
-                Intent(
-                    requireContext(),
-                    EditProfileActivity::class.java
+                startActivity(
+                    Intent(
+                        requireContext(),
+                        EditProfileActivity::class.java
+                    )
                 )
-            )
-        }
+            }
     }
+
+
+    // =========================
+    // LOGOUT
+    // =========================
 
     private fun setupLogout() {
 
-        binding.btnLogout.setOnClickListener {
+        binding.btnLogout
+            .setOnClickListener {
 
-            auth.signOut()
+                // Firebase logout nằm trong
+                // UserRepository -> ViewModel
+                viewModel.logout()
 
-            val intent = Intent(
-                requireContext(),
-                LoginActivity::class.java
-            )
 
-            intent.flags =
-                Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TASK
+                // Navigation vẫn thuộc UI layer
+                val intent =
+                    Intent(
+                        requireContext(),
+                        LoginActivity::class.java
+                    )
 
-            startActivity(intent)
-        }
+                intent.flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+                startActivity(
+                    intent
+                )
+            }
     }
+
+
+    // =========================
+    // RESUME
+    // =========================
 
     override fun onResume() {
 
         super.onResume()
 
-        loadUserInfo()
+        /*
+         * Refresh khi:
+         * - vừa mở Profile
+         * - quay lại từ EditProfileActivity
+         * - favorite count thay đổi
+         */
+        viewModel
+            .loadProfile()
     }
+
+
+    // =========================
+    // DESTROY
+    // =========================
 
     override fun onDestroyView() {
 
