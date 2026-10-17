@@ -1,6 +1,5 @@
 package com.example.smart_cook.ui.fragments
 
-
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -8,25 +7,26 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import com.example.smart_cook.R
+
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 
 import com.bumptech.glide.Glide
 
-import com.example.smart_cook.data.local.AppDatabase
-import com.example.smart_cook.data.remote.RetrofitClient
-
+import com.example.smart_cook.R
 import com.example.smart_cook.databinding.FragmentRecipeDetailBinding
-
-import com.example.smart_cook.model.FavoriteRecipe
 import com.example.smart_cook.model.Meal
+import com.example.smart_cook.ui.recipe_detail.RecipeDetailViewModel
 
-import com.example.smart_cook.repository.FavoriteRepository
-import com.example.smart_cook.repository.MealRepository
+import dagger.hilt.android.AndroidEntryPoint
 
 import kotlinx.coroutines.launch
 
+
+@AndroidEntryPoint
 class RecipeDetailFragment : Fragment() {
 
     private var _binding:
@@ -35,27 +35,19 @@ class RecipeDetailFragment : Fragment() {
     private val binding
         get() = _binding!!
 
-    private lateinit var favoriteRepository:
-            FavoriteRepository
+    private val viewModel:
+            RecipeDetailViewModel by viewModels()
 
-    private lateinit var mealRepository:
-            MealRepository
 
-    private var youtubeLink = ""
-
-    private var isFavorite = false
+    // =========================
+    // CREATE VIEW
+    // =========================
 
     override fun onCreateView(
-
         inflater: LayoutInflater,
-
         container: ViewGroup?,
-
         savedInstanceState: Bundle?
-
     ): View {
-
-
 
         _binding =
             FragmentRecipeDetailBinding.inflate(
@@ -64,441 +56,302 @@ class RecipeDetailFragment : Fragment() {
                 false
             )
 
-
-
-        val database =
-            AppDatabase.getDatabase(
-                requireContext()
-            )
-
-
-
-        favoriteRepository =
-            FavoriteRepository(
-                database.favoriteDao()
-            )
-
-
-
-        mealRepository =
-            MealRepository()
-
-
-
-        val mealId =
-
-            arguments?.getString(
-                "mealId"
-            ) ?: ""
-
-
-
-        if(mealId.isNotEmpty()){
-
-
-            loadMealDetail(
-                mealId
-            )
-
-        }
-
-        binding.btnBack.setOnClickListener {
-
-
-            requireActivity()
-                .onBackPressedDispatcher
-                .onBackPressed()
-
-        }
-
-
-
-        binding.btnYoutube.setOnClickListener {
-
-
-            if(youtubeLink.isNotEmpty()){
-
-
-                startActivity(
-
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse(youtubeLink)
-                    )
-
-                )
-
-            }else{
-
-
-                Toast.makeText(
-
-                    requireContext(),
-
-                    "No Youtube Video",
-
-                    Toast.LENGTH_SHORT
-
-                ).show()
-
-            }
-
-        }
-
-
+        setupListeners()
 
         return binding.root
-
     }
 
+
     // =========================
-    // LOAD DETAIL
+    // VIEW CREATED
     // =========================
 
-
-    private fun loadMealDetail(
-
-        id:String
-
-    ){
-
-
-
-        lifecycleScope.launch {
-
-
-            try {
-
-
-                /*
-                Firebase id thường:
-                vn_001
-
-                API id:
-                52772
-                */
-
-
-                if(id.startsWith("vn_")){
-
-
-                    mealRepository
-                        .getMealById(id){ meal ->
-
-
-                            if(meal != null){
-
-
-                                showMeal(
-                                    meal
-                                )
-
-
-                            }
-
-
-                        }
-
-
-
-                }else{
-
-
-
-                    val response =
-
-                        RetrofitClient.api
-                            .getMealDetail(id)
-
-
-
-                    if(response.isSuccessful){
-
-
-
-                        val apiMeal =
-
-                            response.body()
-                                ?.meals
-                                ?.firstOrNull()
-
-
-
-                        if(apiMeal != null){
-
-
-
-                            val meal =
-
-                                Meal(
-
-
-                                    id =
-                                        apiMeal.id,
-
-
-                                    title =
-                                        apiMeal.title
-                                            ?: "",
-
-
-                                    image =
-                                        apiMeal.image,
-
-
-                                    category =
-                                        apiMeal.category
-                                            ?: "",
-
-
-                                    area =
-                                        apiMeal.area
-                                            ?: "",
-
-
-                                    instructions =
-                                        apiMeal.instructions
-                                            ?: "",
-
-
-                                    source =
-                                        "api"
-
-                                )
-
-
-                            showMeal(
-                                meal
-                            )
-
-
-                        }
-
-                    }
-
-                }
-
-
-
-            }catch(e:Exception){
-
-
-                Toast.makeText(
-
-                    requireContext(),
-
-                    e.message,
-
-                    Toast.LENGTH_SHORT
-
-                ).show()
-
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
+        observeState()
+
+        val mealId =
+            arguments
+                ?.getString(
+                    "mealId"
+                )
+                .orEmpty()
+
+        if (mealId.isNotBlank()) {
+
+            viewModel
+                .loadMealDetail(
+                    mealId
+                )
+
+        } else {
+
+            Toast.makeText(
+                requireContext(),
+                "Invalid recipe ID",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+
+    // =========================
+    // LISTENERS
+    // =========================
+
+    private fun setupListeners() {
+
+        binding.btnBack
+            .setOnClickListener {
+
+                requireActivity()
+                    .onBackPressedDispatcher
+                    .onBackPressed()
             }
 
 
-        }
+        binding.btnFavorite
+            .setOnClickListener {
+
+                viewModel
+                    .toggleFavorite()
+            }
 
 
+        binding.btnYoutube
+            .setOnClickListener {
+
+                openYoutube()
+            }
     }
 
+
     // =========================
-    // SHOW
+    // OBSERVE STATE
     // =========================
 
+    private fun observeState() {
+
+        viewLifecycleOwner
+            .lifecycleScope
+            .launch {
+
+                viewLifecycleOwner
+                    .repeatOnLifecycle(
+                        Lifecycle.State.STARTED
+                    ) {
+
+                        // =========================
+                        // UI STATE
+                        // =========================
+
+                        launch {
+
+                            viewModel
+                                .uiState
+                                .collect { state ->
+
+                                    binding
+                                        .btnFavorite
+                                        .isEnabled =
+                                        !state.isLoading
+
+                                    binding
+                                        .btnYoutube
+                                        .isEnabled =
+                                        !state.isLoading
+
+
+                                    state.meal
+                                        ?.let { meal ->
+
+                                            showMeal(
+                                                meal
+                                            )
+                                        }
+
+
+                                    updateFavoriteIcon(
+                                        state.isFavorite
+                                    )
+
+
+                                    state.error
+                                        ?.let { message ->
+
+                                            Toast.makeText(
+                                                requireContext(),
+                                                message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                }
+                        }
+
+
+                        // =========================
+                        // MESSAGE
+                        // =========================
+
+                        launch {
+
+                            viewModel
+                                .message
+                                .collect { message ->
+
+                                    Toast.makeText(
+                                        requireContext(),
+                                        message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                        }
+                    }
+            }
+    }
+
+
+    // =========================
+    // SHOW RECIPE
+    // =========================
 
     private fun showMeal(
+        meal: Meal
+    ) {
 
-        meal:Meal
-
-    ){
-
-
-
-        Glide.with(requireContext())
-
-            .load(meal.image)
-
+        Glide.with(
+            binding.imgRecipe
+        )
+            .load(
+                meal.image
+            )
             .centerCrop()
-
             .into(
                 binding.imgRecipe
             )
 
 
-
         binding.txtTitle.text =
             meal.title
-
-
 
         binding.txtCategory.text =
             meal.category
 
-
-
         binding.txtArea.text =
             meal.area
-
-
 
         binding.txtInstructions.text =
             meal.instructions
 
-        youtubeLink =
-            meal.youtube
 
+        // Tạm thời giữ nội dung cũ.
+        // Ingredient sẽ refactor ở phase sau.
         binding.txtIngredients.text =
             "Nguyên liệu đang cập nhật"
-
-
-
-        lifecycleScope.launch {
-
-            isFavorite =
-                favoriteRepository
-                    .isFavorite(
-                        meal.id
-                    )
-
-            updateFavoriteIcon()
-
-        }
-
-        binding.btnFavorite.setOnClickListener {
-
-            toggleFavorite(
-                meal
-            )
-
-        }
-
-
     }
 
-    private fun updateFavoriteIcon() {
+
+    // =========================
+    // FAVORITE UI
+    // =========================
+
+    private fun updateFavoriteIcon(
+        isFavorite: Boolean
+    ) {
 
         if (isFavorite) {
 
-            binding.btnFavorite.setImageResource(
-                android.R.drawable.btn_star_big_on
-            )
+            binding.btnFavorite
+                .setImageResource(
+                    android.R.drawable.btn_star_big_on
+                )
 
         } else {
 
-            binding.btnFavorite.setImageResource(
-                R.drawable.ic_favorite
-            )
-
+            binding.btnFavorite
+                .setImageResource(
+                    R.drawable.ic_favorite
+                )
         }
-
     }
 
-    private fun toggleFavorite(
 
-        meal: Meal
+    // =========================
+    // YOUTUBE
+    // =========================
 
-    ) {
+    private fun openYoutube() {
 
-        lifecycleScope.launch {
+        val youtubeLink =
+            viewModel
+                .uiState
+                .value
+                .meal
+                ?.youtube
+                .orEmpty()
+
+        if (youtubeLink.isNotBlank()) {
 
             try {
 
-                if (!isFavorite) {
-
-                    val favorite =
-
-                        FavoriteRecipe(
-
-                            id =
-                                meal.id,
-
-                            title =
-                                meal.title,
-
-                            image =
-                                meal.image
-
+                startActivity(
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse(
+                            youtubeLink
                         )
-
-                    favoriteRepository
-                        .insertFavorite(
-                            favorite
-                        )
-
-                    isFavorite = true
-
-                    updateFavoriteIcon()
-
-                    Toast.makeText(
-
-                        requireContext(),
-
-                        "Added Favorite ❤️",
-
-                        Toast.LENGTH_SHORT
-
-                    ).show()
-
-                } else {
-
-                    favoriteRepository
-                        .deleteFavorite(
-
-                            FavoriteRecipe(
-
-                                id =
-                                    meal.id,
-
-                                title =
-                                    meal.title,
-
-                                image =
-                                    meal.image
-
-                            )
-
-                        )
-
-                    isFavorite = false
-
-                    updateFavoriteIcon()
-
-                    Toast.makeText(
-
-                        requireContext(),
-
-                        "Removed Favorite",
-
-                        Toast.LENGTH_SHORT
-
-                    ).show()
-
-                }
+                    )
+                )
 
             } catch (e: Exception) {
 
                 Toast.makeText(
-
                     requireContext(),
-
-                    e.message,
-
+                    "Unable to open Youtube",
                     Toast.LENGTH_SHORT
-
                 ).show()
-
             }
 
-        }
+        } else {
 
+            Toast.makeText(
+                requireContext(),
+                "No Youtube Video",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 
-    override fun onDestroyView(){
+
+    // =========================
+    // ON RESUME
+    // =========================
+
+    override fun onResume() {
+
+        super.onResume()
+
+        viewModel
+            .refreshFavorite()
+    }
+
+
+    // =========================
+    // DESTROY
+    // =========================
+
+    override fun onDestroyView() {
 
         super.onDestroyView()
 
         _binding = null
-
     }
-
 }

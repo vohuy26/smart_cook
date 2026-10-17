@@ -217,4 +217,92 @@ class MealRepository {
 
         return randomMeals
     }
+
+    suspend fun getMealDetail(
+        id: String
+    ): Meal? {
+
+        if (id.isBlank()) {
+            return null
+        }
+
+        return if (id.startsWith("vn_")) {
+
+            // =========================
+            // FIREBASE RECIPE
+            // =========================
+
+            val document =
+                db.collection("recipes")
+                    .document(id)
+                    .get()
+                    .await()
+
+            if (!document.exists()) {
+
+                null
+
+            } else {
+
+                document
+                    .toObject(Meal::class.java)
+                    ?.apply {
+
+                        this.id =
+                            document.id
+
+                        source =
+                            "firebase"
+
+                        createdAt =
+                            document.getLong(
+                                "createdAt"
+                            ) ?: 0L
+                    }
+            }
+
+        } else {
+
+            // =========================
+            // THEMEALDB RECIPE
+            // =========================
+
+            val response =
+                RetrofitClient.api
+                    .getMealDetail(id)
+
+            if (!response.isSuccessful) {
+
+                null
+
+            } else {
+
+                val apiMeal =
+                    response.body()
+                        ?.meals
+                        ?.firstOrNull()
+
+                apiMeal?.let {
+
+                    Meal(
+                        id = it.id,
+                        title =
+                            it.title ?: "",
+                        image =
+                            it.image,
+                        category =
+                            it.category ?: "",
+                        area =
+                            it.area ?: "",
+                        instructions =
+                            it.instructions ?: "",
+                        youtube =
+                            it.youtube ?: "",
+                        source =
+                            "api"
+                    )
+                }
+            }
+        }
+    }
 }
