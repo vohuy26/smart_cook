@@ -5,24 +5,38 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.Fragment
-import com.example.smart_cook.databinding.FragmentFeedbackBinding
-import com.example.smart_cook.model.Feedback
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+
+import com.example.smart_cook.databinding.FragmentFeedbackBinding
+import com.example.smart_cook.ui.feedback.FeedbackViewModel
+import androidx.core.widget.addTextChangedListener
+
+import dagger.hilt.android.AndroidEntryPoint
+
+import kotlinx.coroutines.launch
+
+
+@AndroidEntryPoint
 class FeedbackFragment : Fragment() {
 
     private var _binding:
             FragmentFeedbackBinding? = null
 
-    private val binding get() = _binding!!
+    private val binding
+        get() = _binding!!
 
-    private lateinit var firestore:
-            FirebaseFirestore
+    private val viewModel:
+            FeedbackViewModel by viewModels()
 
-    private lateinit var auth:
-            FirebaseAuth
+
+    // =========================
+    // CREATE VIEW
+    // =========================
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,67 +51,149 @@ class FeedbackFragment : Fragment() {
                 false
             )
 
-        firestore =
-            FirebaseFirestore.getInstance()
-
-        auth =
-            FirebaseAuth.getInstance()
-
-        setupSubmit()
+        setupListeners()
 
         return binding.root
     }
 
-    private fun setupSubmit() {
 
-        binding.btnSubmit.setOnClickListener {
+    // =========================
+    // VIEW CREATED
+    // =========================
 
-            submitFeedback()
-        }
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
+        observeState()
     }
 
-    private fun submitFeedback() {
 
-        val uid =
-            auth.currentUser?.uid ?: return
+    // =========================
+    // LISTENERS
+    // =========================
 
-        val comment =
-            binding.edtComment.text.toString()
+    private fun setupListeners() {
 
-        val rating =
-            binding.ratingBar.rating
+        binding.edtComment
+            .addTextChangedListener {
 
-        val feedback =
-            Feedback(
-                uid = uid,
-                username =
-                    auth.currentUser?.email ?: "",
-                rating = rating,
-                comment = comment
-            )
-
-        firestore.collection("feedbacks")
-            .add(feedback)
-            .addOnSuccessListener {
-
-                Toast.makeText(
-                    requireContext(),
-                    "Thank you for feedback ❤️",
-                    Toast.LENGTH_SHORT
-                ).show()
-
-                binding.edtComment.setText("")
-                binding.ratingBar.rating = 0f
+                viewModel
+                    .onCommentChanged(
+                        it?.toString()
+                            .orEmpty()
+                    )
             }
-            .addOnFailureListener {
 
-                Toast.makeText(
-                    requireContext(),
-                    "Failed",
-                    Toast.LENGTH_SHORT
-                ).show()
+
+        binding.ratingBar
+            .setOnRatingBarChangeListener {
+                    _,
+                    rating,
+                    _ ->
+
+                viewModel
+                    .onRatingChanged(
+                        rating
+                    )
+            }
+
+
+        binding.btnSubmit
+            .setOnClickListener {
+
+                viewModel
+                    .submitFeedback()
             }
     }
+
+
+    // =========================
+    // OBSERVE STATE
+    // =========================
+
+    private fun observeState() {
+
+        viewLifecycleOwner
+            .lifecycleScope
+            .launch {
+
+                viewLifecycleOwner
+                    .repeatOnLifecycle(
+                        Lifecycle.State.STARTED
+                    ) {
+
+                        // =========================
+                        // UI STATE
+                        // =========================
+
+                        launch {
+
+                            viewModel
+                                .uiState
+                                .collect { state ->
+
+                                    binding.btnSubmit.isEnabled =
+                                        !state.isSubmitting
+
+
+                                    if (state.isSubmitted) {
+
+                                        binding.edtComment
+                                            .setText("")
+
+                                        binding.ratingBar.rating =
+                                            0f
+
+                                        viewModel
+                                            .consumeSubmitted()
+                                    }
+
+
+                                    state.error
+                                        ?.let { message ->
+
+                                            Toast.makeText(
+                                                requireContext(),
+                                                message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                }
+                        }
+
+
+                        // =========================
+                        // MESSAGE
+                        // =========================
+
+                        launch {
+
+                            viewModel
+                                .message
+                                .collect { message ->
+
+                                    Toast.makeText(
+                                        requireContext(),
+                                        message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                        }
+                    }
+            }
+    }
+
+
+    // =========================
+    // DESTROY
+    // =========================
 
     override fun onDestroyView() {
 

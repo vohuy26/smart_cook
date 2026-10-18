@@ -22,6 +22,7 @@ import com.example.smart_cook.ui.activities.EditProfileActivity
 import com.example.smart_cook.ui.activities.LoginActivity
 import com.example.smart_cook.ui.profile.ProfileViewModel
 import com.example.smart_cook.utils.ThemeManager
+import androidx.navigation.fragment.findNavController
 
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -91,9 +92,23 @@ class ProfileFragment : Fragment() {
 
         setupAvatarPicker()
 
+        setupFeedback()
+
         setupLogout()
 
         return binding.root
+    }
+
+    private fun setupFeedback() {
+
+        binding.cardFeedback
+            .setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.feedbackFragment
+                    )
+            }
     }
 
 
