@@ -18,6 +18,7 @@ import javax.inject.Singleton
 import com.example.smart_cook.repository.AvatarRepository
 import com.example.smart_cook.repository.NotificationRepository
 import com.example.smart_cook.repository.FeedbackRepository
+import com.example.smart_cook.repository.ChatRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -118,5 +119,13 @@ object RepositoryModule {
             FeedbackRepository {
 
         return FeedbackRepository()
+    }
+
+    @Provides
+    @Singleton
+    fun provideChatRepository():
+            ChatRepository {
+
+        return ChatRepository()
     }
 }
