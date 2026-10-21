@@ -73,6 +73,15 @@ class HomeFragment : Fragment() {
                 R.id.searchFragment
         }
 
+        binding.cardRanking
+            .setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.rankingFragment
+                    )
+            }
+
         return binding.root
     }
 

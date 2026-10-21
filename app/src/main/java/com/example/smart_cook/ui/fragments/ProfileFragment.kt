@@ -94,6 +94,10 @@ class ProfileFragment : Fragment() {
 
         setupFeedback()
 
+        setupAddRecipe()
+
+        setupMyRecipes()
+
         setupLogout()
 
         return binding.root
@@ -107,6 +111,30 @@ class ProfileFragment : Fragment() {
                 findNavController()
                     .navigate(
                         R.id.feedbackFragment
+                    )
+            }
+    }
+
+    private fun setupAddRecipe() {
+
+        binding.cardAddRecipe
+            .setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.addUserRecipeFragment
+                    )
+            }
+    }
+
+    private fun setupMyRecipes() {
+
+        binding.cardMyRecipes
+            .setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.myRecipesFragment
                     )
             }
     }

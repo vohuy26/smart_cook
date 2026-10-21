@@ -157,7 +157,9 @@ class MainActivity : AppCompatActivity() {
 
                     R.id.notificationFragment,
                     R.id.recipeDetailFragment,
-                    R.id.feedbackFragment -> {
+                    R.id.addUserRecipeFragment,
+                    R.id.feedbackFragment,
+                    R.id.myRecipesFragment-> {
 
                         binding
                             .bottomNavigationView

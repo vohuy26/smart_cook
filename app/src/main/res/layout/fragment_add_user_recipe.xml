@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- IMAGE -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:cardCornerRadius="18dp">
+
+            <ImageView
+                android:id="@+id/imgRecipePreview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:contentDescription="Recipe image" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnChooseImage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Chọn ảnh món ăn" />
+
+        <!-- TITLE -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:hint="Tên món ăn">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- CATEGORY -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Danh mục"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spCategory"
+            android:layout_width="match_parent"
+            android:layout_height="52dp" />
+
+        <!-- AREA -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Ẩm thực / Khu vực">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtArea"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- DESCRIPTION -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Mô tả món ăn">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtDescription"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:gravity="top"
+                android:inputType="textMultiLine" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- INGREDIENTS -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Nguyên liệu - mỗi dòng một nguyên liệu">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtIngredients"
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:gravity="top"
+                android:inputType="textMultiLine" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- STEPS -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Các bước nấu - mỗi dòng một bước">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtSteps"
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:gravity="top"
+                android:inputType="textMultiLine" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- COOKING TIME -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Thời gian nấu (phút)">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtCookingTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- SERVINGS -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Khẩu phần">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtServings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- YOUTUBE -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="YouTube URL (không bắt buộc)">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtYoutube"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textUri" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- INFO -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Món ăn của bạn sẽ được gửi cho Admin kiểm duyệt trước khi hiển thị công khai."
+            android:textSize="13sp" />
+
+        <!-- PROGRESS -->
+        <ProgressBar
+            android:id="@+id/progressSubmit"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
+
+        <!-- SUBMIT -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSubmitRecipe"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="28dp"
+            android:text="Gửi món ăn để duyệt"
+            app:cornerRadius="16dp" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

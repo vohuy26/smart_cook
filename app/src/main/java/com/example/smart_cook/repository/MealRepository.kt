@@ -4,6 +4,7 @@ import com.example.smart_cook.data.remote.RetrofitClient
 import com.example.smart_cook.model.Meal
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import com.example.smart_cook.model.RecipeStatus
 
 class MealRepository {
 
@@ -41,21 +42,29 @@ class MealRepository {
     ) {
 
         db.collection("recipes")
+            .whereEqualTo(
+                "status",
+                RecipeStatus.APPROVED.name
+            )
             .get()
             .addOnSuccessListener { snapshot ->
 
-                val meals = snapshot.documents.mapNotNull { doc ->
+                val meals =
+                    snapshot.documents.mapNotNull { doc ->
+                        doc.toObject(
+                            Meal::class.java
+                        )?.apply {
 
-                    doc.toObject(Meal::class.java)?.apply {
+                            id = doc.id
 
-                        id = doc.id
-                        source = "firebase"
+                            source = "firebase"
 
-                        createdAt =
-                            doc.getLong("createdAt")
-                                ?: 0L
+                            createdAt =
+                                doc.getLong(
+                                    "createdAt"
+                                ) ?: 0L
+                        }
                     }
-                }
 
                 onSuccess(meals)
             }
@@ -75,17 +84,27 @@ class MealRepository {
             .get()
             .addOnSuccessListener { doc ->
 
-                if (doc.exists()) {
+                if (
+                    doc.exists() &&
+                    doc.getString("status") ==
+                    RecipeStatus.APPROVED.name
+                ) {
 
                     val meal =
-                        doc.toObject(Meal::class.java)
+                        doc.toObject(
+                            Meal::class.java
+                        )
 
-                    meal?.id = doc.id
-                    meal?.source = "firebase"
+                    meal?.id =
+                        doc.id
+
+                    meal?.source =
+                        "firebase"
 
                     meal?.createdAt =
-                        doc.getLong("createdAt")
-                            ?: 0L
+                        doc.getLong(
+                            "createdAt"
+                        ) ?: 0L
 
                     callback(meal)
 
@@ -93,6 +112,10 @@ class MealRepository {
 
                     callback(null)
                 }
+            }
+            .addOnFailureListener {
+
+                callback(null)
             }
     }
 
@@ -134,6 +157,10 @@ class MealRepository {
 
         val firebaseSnapshot =
             db.collection("recipes")
+                .whereEqualTo(
+                    "status",
+                    RecipeStatus.APPROVED.name
+                )
                 .get()
                 .await()
 
@@ -141,13 +168,17 @@ class MealRepository {
             firebaseSnapshot
                 .documents
                 .mapNotNull { document ->
-
                     document
-                        .toObject(Meal::class.java)
+                        .toObject(
+                            Meal::class.java
+                        )
                         ?.apply {
 
-                            id = document.id
-                            source = "firebase"
+                            id =
+                                document.id
+
+                            source =
+                                "firebase"
 
                             createdAt =
                                 document.getLong(
@@ -226,83 +257,108 @@ class MealRepository {
             return null
         }
 
-        return if (id.startsWith("vn_")) {
 
-            // =========================
-            // FIREBASE RECIPE
-            // =========================
+        // =========================
+        // THEMEALDB
+        // =========================
 
-            val document =
-                db.collection("recipes")
-                    .document(id)
-                    .get()
-                    .await()
+        // TheMealDB dùng ID dạng số:
+        // 52772, 53013, ...
+        val isApiRecipe =
+            id.toLongOrNull() != null
 
-            if (!document.exists()) {
 
-                null
-
-            } else {
-
-                document
-                    .toObject(Meal::class.java)
-                    ?.apply {
-
-                        this.id =
-                            document.id
-
-                        source =
-                            "firebase"
-
-                        createdAt =
-                            document.getLong(
-                                "createdAt"
-                            ) ?: 0L
-                    }
-            }
-
-        } else {
-
-            // =========================
-            // THEMEALDB RECIPE
-            // =========================
+        if (isApiRecipe) {
 
             val response =
                 RetrofitClient.api
                     .getMealDetail(id)
 
+
             if (!response.isSuccessful) {
+                return null
+            }
 
-                null
 
-            } else {
+            val apiMeal =
+                response.body()
+                    ?.meals
+                    ?.firstOrNull()
 
-                val apiMeal =
-                    response.body()
-                        ?.meals
-                        ?.firstOrNull()
 
-                apiMeal?.let {
+            return apiMeal?.let {
 
-                    Meal(
-                        id = it.id,
-                        title =
-                            it.title ?: "",
-                        image =
-                            it.image,
-                        category =
-                            it.category ?: "",
-                        area =
-                            it.area ?: "",
-                        instructions =
-                            it.instructions ?: "",
-                        youtube =
-                            it.youtube ?: "",
-                        source =
-                            "api"
-                    )
-                }
+                Meal(
+                    id = it.id,
+
+                    title =
+                        it.title ?: "",
+
+                    image =
+                        it.image,
+
+                    category =
+                        it.category ?: "",
+
+                    area =
+                        it.area ?: "",
+
+                    instructions =
+                        it.instructions ?: "",
+
+                    youtube =
+                        it.youtube ?: "",
+
+                    source =
+                        "api"
+                )
             }
         }
+
+
+        // =========================
+        // FIREBASE
+        // =========================
+
+        // Firebase gồm:
+        //
+        // User recipe:
+        // vn_xxxxx
+        //
+        // Admin recipe:
+        // Firestore auto ID
+        // a8Fxxx...
+        //
+        // Đều là ID không thuần số.
+
+        val document =
+            db.collection("recipes")
+                .document(id)
+                .get()
+                .await()
+
+
+        if (!document.exists()) {
+            return null
+        }
+
+
+        return document
+            .toObject(
+                Meal::class.java
+            )
+            ?.apply {
+
+                this.id =
+                    document.id
+
+                source =
+                    "firebase"
+
+                createdAt =
+                    document.getLong(
+                        "createdAt"
+                    ) ?: 0L
+            }
     }
 }

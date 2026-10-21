@@ -12,6 +12,7 @@ import com.cloudinary.android.callback.UploadCallback
 import com.example.smart_cook.databinding.ActivityAddRecipeBinding
 import com.example.smart_cook.utils.CloudinaryManager
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.smart_cook.model.RecipeStatus
 
 class AddRecipeActivity : AppCompatActivity() {
 
@@ -174,7 +175,12 @@ class AddRecipeActivity : AppCompatActivity() {
 
             "favoriteCount" to 0,
 
-            "createdAt" to System.currentTimeMillis()
+            "createdAt" to System.currentTimeMillis(),
+
+            "creatorType" to "ADMIN",
+
+            "status" to
+                    RecipeStatus.APPROVED.name,
         )
 
         firestore.collection("recipes")

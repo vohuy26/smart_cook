@@ -16,5 +16,7 @@ data class Review(
 
     var comment: String = "",
 
-    var createdAt: Long = 0
+    var createdAt: Long = 0L,
+
+    var updatedAt: Long = 0L
 )

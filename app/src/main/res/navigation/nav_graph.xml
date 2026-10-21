@@ -30,6 +30,11 @@
         android:label="ChatFragment"/>
 
     <fragment
+        android:id="@+id/rankingFragment"
+        android:name="com.example.smart_cook.ui.ranking.RankingFragment"
+        android:label="Ranking"/>
+
+    <fragment
         android:id="@+id/recipeDetailFragment"
         android:name="com.example.smart_cook.ui.fragments.RecipeDetailFragment"
         android:label="Recipe Detail"/>
@@ -43,5 +48,15 @@
         android:id="@+id/feedbackFragment"
         android:name="com.example.smart_cook.ui.fragments.FeedbackFragment"
         android:label="Feedback" />
+
+    <fragment
+        android:id="@+id/addUserRecipeFragment"
+        android:name="com.example.smart_cook.ui.add_recipe.AddUserRecipeFragment"
+        android:label="Chia sẻ món ăn" />
+
+    <fragment
+        android:id="@+id/myRecipesFragment"
+        android:name="com.example.smart_cook.ui.my_recipes.MyRecipesFragment"
+        android:label="Món ăn của tôi" />
 
 </navigation>

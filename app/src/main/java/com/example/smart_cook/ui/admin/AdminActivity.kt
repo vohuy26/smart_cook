@@ -11,7 +11,9 @@ import com.example.smart_cook.ui.admin.dashboard.AdminDashboardFragment
 import com.example.smart_cook.ui.admin.review.AdminReviewFragment
 import com.example.smart_cook.ui.admin.setting.AdminSettingFragment
 import com.example.smart_cook.ui.admin.statistic.AdminStatisticFragment
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class AdminActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAdminBinding

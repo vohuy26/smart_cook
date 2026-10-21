@@ -19,7 +19,20 @@ import com.example.smart_cook.databinding.FragmentAdminRecipeBinding
 import com.example.smart_cook.ui.admin.adapter.AdminRecipeAdapter
 import com.example.smart_cook.ui.admin.model.AdminRecipe
 import com.google.firebase.firestore.FirebaseFirestore
+import android.widget.EditText
 
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+
+import com.example.smart_cook.ui.admin.approval.AdminRecipeApprovalViewModel
+
+import dagger.hilt.android.AndroidEntryPoint
+
+import kotlinx.coroutines.launch
+
+@AndroidEntryPoint
 class AdminRecipeFragment : Fragment() {
 
     private var _binding: FragmentAdminRecipeBinding? = null
@@ -35,6 +48,9 @@ class AdminRecipeFragment : Fragment() {
 
     private val firestore =
         FirebaseFirestore.getInstance()
+
+    private val approvalViewModel:
+            AdminRecipeApprovalViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -69,20 +85,40 @@ class AdminRecipeFragment : Fragment() {
 
                 recipeList,
 
+                // =========================
+                // DELETE
+                // =========================
+
                 onDelete = { recipe ->
 
-                    AlertDialog.Builder(requireContext())
-                        .setTitle("Xóa món ăn")
+                    AlertDialog.Builder(
+                        requireContext()
+                    )
+                        .setTitle(
+                            "Xóa món ăn"
+                        )
                         .setMessage(
                             "Bạn có chắc muốn xóa \"${recipe.title}\" không?"
                         )
-                        .setPositiveButton("Xóa") { _, _ ->
+                        .setPositiveButton(
+                            "Xóa"
+                        ) { _, _ ->
 
-                            deleteRecipe(recipe.id)
+                            deleteRecipe(
+                                recipe.id
+                            )
                         }
-                        .setNegativeButton("Hủy", null)
+                        .setNegativeButton(
+                            "Hủy",
+                            null
+                        )
                         .show()
                 },
+
+
+                // =========================
+                // EDIT
+                // =========================
 
                 onEdit = { recipe ->
 
@@ -97,17 +133,203 @@ class AdminRecipeFragment : Fragment() {
                         recipe.id
                     )
 
-                    startActivity(intent)
+                    startActivity(
+                        intent
+                    )
+                },
+
+
+                // =========================
+                // VIEW
+                // =========================
+
+                onView = { recipe ->
+
+                    showRecipeDetail(
+                        recipe
+                    )
+                },
+
+
+                // =========================
+                // APPROVE
+                // =========================
+
+                onApprove = { recipe ->
+
+                    AlertDialog.Builder(
+                        requireContext()
+                    )
+                        .setTitle(
+                            "Duyệt món ăn"
+                        )
+                        .setMessage(
+                            "Bạn có muốn duyệt \"${recipe.title}\"?"
+                        )
+                        .setPositiveButton(
+                            "Duyệt"
+                        ) { _, _ ->
+
+                            approvalViewModel
+                                .approveRecipe(
+                                    recipe.id
+                                )
+                        }
+                        .setNegativeButton(
+                            "Hủy",
+                            null
+                        )
+                        .show()
+                },
+
+
+                // =========================
+                // REJECT
+                // =========================
+
+                onReject = { recipe ->
+
+                    showRejectDialog(
+                        recipe
+                    )
                 }
             )
+
 
         binding.rvRecipes.layoutManager =
             LinearLayoutManager(
                 requireContext()
             )
 
+
         binding.rvRecipes.adapter =
             adapter
+    }
+
+    private fun showRecipeDetail(
+        recipe: AdminRecipe
+    ) {
+
+        val message =
+            """
+        Người gửi:
+        ${recipe.ownerName.ifBlank { "Admin" }}
+
+        Danh mục:
+        ${recipe.category}
+
+        Khu vực:
+        ${recipe.area}
+
+        Trạng thái:
+        ${recipe.status}
+
+        Hướng dẫn:
+        ${recipe.instructions}
+        """.trimIndent()
+
+
+        AlertDialog.Builder(
+            requireContext()
+        )
+            .setTitle(
+                recipe.title
+            )
+            .setMessage(
+                message
+            )
+            .setPositiveButton(
+                "Đóng",
+                null
+            )
+            .show()
+    }
+
+    private fun showRejectDialog(
+        recipe: AdminRecipe
+    ) {
+
+        val input =
+            EditText(
+                requireContext()
+            )
+
+        input.hint =
+            "Nhập lý do từ chối"
+
+        input.minLines =
+            3
+
+        input.setPadding(
+            40,
+            20,
+            40,
+            20
+        )
+
+
+        val dialog =
+            AlertDialog.Builder(
+                requireContext()
+            )
+                .setTitle(
+                    "Từ chối món ăn"
+                )
+                .setMessage(
+                    recipe.title
+                )
+                .setView(
+                    input
+                )
+                .setPositiveButton(
+                    "Từ chối",
+                    null
+                )
+                .setNegativeButton(
+                    "Hủy",
+                    null
+                )
+                .create()
+
+
+        dialog.setOnShowListener {
+
+            dialog
+                .getButton(
+                    AlertDialog.BUTTON_POSITIVE
+                )
+                .setOnClickListener {
+
+                    val reason =
+                        input.text
+                            .toString()
+                            .trim()
+
+
+                    if (
+                        reason.isBlank()
+                    ) {
+
+                        input.error =
+                            "Vui lòng nhập lý do"
+
+                        return@setOnClickListener
+                    }
+
+
+                    approvalViewModel
+                        .rejectRecipe(
+                            recipe.id,
+                            reason
+                        )
+
+
+                    dialog.dismiss()
+                }
+        }
+
+
+        dialog.show()
     }
 
     private fun setupAddRecipe() {
@@ -188,38 +410,86 @@ class AdminRecipeFragment : Fragment() {
 
                 for (doc in it) {
 
+                    val creatorType =
+                        doc.getString(
+                            "creatorType"
+                        ) ?: "ADMIN"
+
+
+                    val status =
+                        doc.getString(
+                            "status"
+                        )
+                            ?: if (
+                                creatorType == "USER"
+                            ) {
+                                "PENDING"
+                            } else {
+                                "APPROVED"
+                            }
+
+
                     val recipe =
                         AdminRecipe(
 
-                            id = doc.id,
+                            id =
+                                doc.id,
 
                             title =
-                                doc.getString("title")
-                                    ?: "",
+                                doc.getString(
+                                    "title"
+                                ) ?: "",
 
                             image =
-                                doc.getString("image")
-                                    ?: "",
+                                doc.getString(
+                                    "image"
+                                ) ?: "",
 
                             category =
-                                doc.getString("category")
-                                    ?: "",
+                                doc.getString(
+                                    "category"
+                                ) ?: "",
 
                             area =
-                                doc.getString("area")
-                                    ?: "",
+                                doc.getString(
+                                    "area"
+                                ) ?: "",
 
                             instructions =
-                                doc.getString("instructions")
-                                    ?: "",
+                                doc.getString(
+                                    "instructions"
+                                ) ?: "",
 
                             youtube =
-                                doc.getString("youtube")
-                                    ?: "",
+                                doc.getString(
+                                    "youtube"
+                                ) ?: "",
 
                             source =
-                                doc.getString("source")
-                                    ?: "firebase"
+                                doc.getString(
+                                    "source"
+                                ) ?: "firebase",
+
+                            creatorType =
+                                creatorType,
+
+                            ownerId =
+                                doc.getString(
+                                    "ownerId"
+                                ) ?: "",
+
+                            ownerName =
+                                doc.getString(
+                                    "ownerName"
+                                ) ?: "",
+
+                            status =
+                                status,
+
+                            rejectionReason =
+                                doc.getString(
+                                    "rejectionReason"
+                                ) ?: ""
                         )
 
                     recipeList.add(recipe)
@@ -315,6 +585,74 @@ class AdminRecipeFragment : Fragment() {
         )
 
         adapter.notifyDataSetChanged()
+    }
+
+    private fun observeApproval() {
+
+        viewLifecycleOwner
+            .lifecycleScope
+            .launch {
+
+                viewLifecycleOwner
+                    .repeatOnLifecycle(
+                        Lifecycle.State.STARTED
+                    ) {
+
+                        launch {
+
+                            approvalViewModel
+                                .message
+                                .collect { message ->
+
+                                    Toast.makeText(
+                                        requireContext(),
+                                        message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+
+
+                                    // Reload để cập nhật
+                                    // PENDING → APPROVED/REJECTED
+                                    loadRecipes()
+                                }
+                        }
+
+
+                        launch {
+
+                            approvalViewModel
+                                .uiState
+                                .collect { state ->
+
+                                    state.error
+                                        ?.let { error ->
+
+                                            Toast.makeText(
+                                                requireContext(),
+                                                error,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+
+                                            approvalViewModel
+                                                .consumeError()
+                                        }
+                                }
+                        }
+                    }
+            }
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
+        observeApproval()
     }
 
     override fun onResume() {

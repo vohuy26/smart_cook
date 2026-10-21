@@ -19,6 +19,9 @@ import com.example.smart_cook.repository.AvatarRepository
 import com.example.smart_cook.repository.NotificationRepository
 import com.example.smart_cook.repository.FeedbackRepository
 import com.example.smart_cook.repository.ChatRepository
+import com.example.smart_cook.repository.RecipeSubmissionRepository
+import com.example.smart_cook.repository.RecipeImageRepository
+import com.example.smart_cook.repository.AdminRecipeApprovalRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -127,5 +130,29 @@ object RepositoryModule {
             ChatRepository {
 
         return ChatRepository()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRecipeSubmissionRepository():
+            RecipeSubmissionRepository {
+
+        return RecipeSubmissionRepository()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRecipeImageRepository():
+            RecipeImageRepository {
+
+        return RecipeImageRepository()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAdminRecipeApprovalRepository():
+            AdminRecipeApprovalRepository {
+
+        return AdminRecipeApprovalRepository()
     }
 }

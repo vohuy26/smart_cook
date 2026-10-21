@@ -16,5 +16,18 @@ data class AdminRecipe(
 
     val youtube: String = "",
 
-    val source: String = "firebase"
+    val source: String = "firebase",
+
+    // ADMIN / USER
+    val creatorType: String = "ADMIN",
+
+    // Người gửi
+    val ownerId: String = "",
+
+    val ownerName: String = "",
+
+    // PENDING / APPROVED / REJECTED
+    val status: String = "APPROVED",
+
+    val rejectionReason: String = ""
 )

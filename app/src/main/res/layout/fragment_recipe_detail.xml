@@ -244,6 +244,184 @@
 
         </LinearLayout>
 
+        <!-- ========================= -->
+        <!-- RATING -->
+        <!-- ========================= -->
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="30dp"
+            android:background="#EEEEEE"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Đánh giá món ăn"
+            android:textColor="#111111"
+            android:textSize="24sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/txtAverageRating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Chưa có đánh giá"
+            android:textColor="#666666"
+            android:textSize="15sp"/>
+
+        <TextView
+            android:id="@+id/txtYourRating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Đánh giá của bạn"
+            android:textColor="#333333"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+
+        <RatingBar
+            android:id="@+id/ratingBar"
+            style="?android:attr/ratingBarStyleIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:isIndicator="false"
+            android:numStars="5"
+            android:rating="0"
+            android:stepSize="1.0"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRemoveRating"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginTop="10dp"
+            android:text="Xóa đánh giá"
+            android:textAllCaps="false"
+            android:visibility="gone"
+            app:cornerRadius="14dp"
+            app:strokeWidth="1dp"/>
+
+        <!-- ========================= -->
+        <!-- COMMENTS -->
+        <!-- ========================= -->
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="32dp"
+            android:background="#EEEEEE"/>
+
+
+        <TextView
+            android:id="@+id/txtCommentTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Bình luận"
+            android:textColor="#111111"
+            android:textSize="24sp"
+            android:textStyle="bold"/>
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Chia sẻ trải nghiệm của bạn về món ăn này"
+            android:textColor="#777777"
+            android:textSize="14sp"/>
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            app:boxBackgroundMode="outline"
+            app:boxCornerRadiusTopStart="16dp"
+            app:boxCornerRadiusTopEnd="16dp"
+            app:boxCornerRadiusBottomStart="16dp"
+            app:boxCornerRadiusBottomEnd="16dp"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtComment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="100dp"
+                android:gravity="top|start"
+                android:hint="Viết bình luận của bạn..."
+                android:inputType="textCapSentences|textMultiLine"
+                android:maxLength="1000"
+                android:maxLines="6"
+                android:padding="14dp"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSubmitComment"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:text="Gửi bình luận"
+                android:textAllCaps="false"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"/>
+
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDeleteComment"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginStart="10dp"
+                android:text="Xóa"
+                android:textAllCaps="false"
+                android:visibility="gone"
+                app:cornerRadius="14dp"
+                app:strokeWidth="1dp"/>
+
+        </LinearLayout>
+
+
+        <ProgressBar
+            android:id="@+id/progressComments"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:visibility="gone"/>
+
+
+        <TextView
+            android:id="@+id/txtEmptyComments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:padding="18dp"
+            android:text="Chưa có bình luận nào.\nHãy là người đầu tiên bình luận!"
+            android:textColor="#999999"
+            android:textSize="14sp"
+            android:visibility="gone"/>
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvComments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:clipToPadding="false"
+            android:nestedScrollingEnabled="false"/>
+
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>

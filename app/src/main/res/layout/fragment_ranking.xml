@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🏆 Bảng xếp hạng"
+        android:textColor="#111111"
+        android:textSize="28sp"
+        android:textStyle="bold"/>
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Khám phá những món ăn được cộng đồng yêu thích"
+        android:textColor="#777777"
+        android:textSize="14sp"/>
+
+
+    <!-- TAB -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:orientation="horizontal">
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTopRated"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:text="Top Rated"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"/>
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMostRated"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:text="Most Rated"
+            android:textAllCaps="false"
+            app:cornerRadius="14dp"/>
+
+    </LinearLayout>
+
+
+    <ProgressBar
+        android:id="@+id/progressRanking"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="30dp"
+        android:visibility="gone"/>
+
+
+    <TextView
+        android:id="@+id/txtEmptyRanking"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:gravity="center"
+        android:padding="24dp"
+        android:text="Chưa có dữ liệu xếp hạng"
+        android:textColor="#999999"
+        android:textSize="15sp"
+        android:visibility="gone"/>
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvRanking"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="20dp"
+        android:clipToPadding="false"
+        android:paddingBottom="20dp"/>
+
+</LinearLayout>
